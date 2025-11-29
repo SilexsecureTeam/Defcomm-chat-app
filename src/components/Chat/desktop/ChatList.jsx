@@ -7,11 +7,13 @@ import { useQuery } from "@tanstack/react-query";
 import { maskPhone } from "../../../utils/formmaters";
 import useGroups from "../../../hooks/useGroup";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAppStore } from "../../../context/StoreContext";
 
 export default function ChatList() {
   const { setSelectedChatUser, selectedChatUser, typingUsers } =
     useContext(ChatContext);
   const navigate = useNavigate();
+  const { set } = useAppStore();
 
   const { useFetchContacts, fetchChatHistory } = useChat();
   const { useFetchGroups } = useGroups();
@@ -20,9 +22,11 @@ export default function ChatList() {
   const [showGroups, setShowGroups] = useState(true);
 
   const location = useLocation();
-  const chatUserData = location?.state;
 
   const navigateToChat = (data, type = "user") => {
+    // Save selected chat in store
+    setSelectedChatUser({ ...data, type });
+    set("selectedChatUser", { ...data, type });
     navigate(
       `/dashboard/${type}/${
         type === "user" ? data?.contact_id_encrypt : data?.group_id
@@ -82,7 +86,7 @@ export default function ChatList() {
   }, [search, filteredContacts, filteredGroups]);
 
   return (
-    <div className="w-72 h-screen flex flex-col bg-transparent">
+    <div className="w-72 h-full flex flex-col bg-transparent">
       {/* Header */}
       <div className="p-4 space-y-4">
         <h2 className="text-2xl font-semibold">Chat</h2>
@@ -123,7 +127,7 @@ export default function ChatList() {
             onClick={() => setShowUsers((prev) => !prev)}
             className="flex items-center justify-between w-full text-sm text-oliveHover mb-2 bg-gray-900/50 backdrop-blur-sm p-2"
           >
-            <span>Users</span>
+            <span>Users ({filteredContacts?.length})</span>
             {showUsers ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
           </button>
         </div>
@@ -134,7 +138,8 @@ export default function ChatList() {
                 key={user?.id}
                 onClick={() => navigateToChat(user, "user")}
                 className={`cursor-pointer flex gap-[10px] hover:bg-gray-800 ${
-                  chatUserData?.contact_id === user?.contact_id && "bg-gray-800"
+                  selectedChatUser?.contact_id === user?.contact_id &&
+                  "bg-gray-800"
                 } group items-center p-3 font-medium rounded-md`}
               >
                 <figure className="relative w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center text-black font-bold">
@@ -179,7 +184,7 @@ export default function ChatList() {
             onClick={() => setShowGroups((prev) => !prev)}
             className="flex items-center justify-between w-full text-sm text-oliveHover mb-2 bg-gray-900/50 backdrop-blur-sm p-2"
           >
-            <span>Groups</span>
+            <span>Groups ({filteredGroups?.length ?? 0})</span>
             {showGroups ? (
               <ChevronDown size={16} />
             ) : (
@@ -194,8 +199,8 @@ export default function ChatList() {
                 key={group?.id}
                 onClick={() => navigateToChat(group, "group")}
                 className={`cursor-pointer flex gap-[10px] hover:bg-gray-800 ${
-                  chatUserData?.id === group?.id &&
-                  chatUserData?.type === "group" &&
+                  selectedChatUser?.id === group?.id &&
+                  selectedChatUser?.type === "group" &&
                   "bg-gray-800"
                 } group items-center p-3 font-medium rounded-md`}
               >

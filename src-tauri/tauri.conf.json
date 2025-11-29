@@ -6,15 +6,35 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm build",
+    "beforeBuildCommand": "pnpm build && npx copyfiles splashscreen.html dist/",
     "frontendDist": "../dist"
   },
   "app": {
     "windows": [
       {
+        "label": "splashscreen",
+        "title": "Loading Defcomm...",
+        "url": "splashscreen.html",
+        "width": 400,
+        "height": 300,
+        "decorations": false,
+        "alwaysOnTop": true,
+        "resizable": false,
+        "center": true,
+        "transparent": true,
+        "visible": false
+      },
+      {
+        "label": "main",
         "title": "Defcomm App",
+        "url": "index.html",
         "width": 1000,
-        "height": 600
+        "height": 600,
+        "minWidth": 600,
+        "minHeight": 400,
+        "decorations": false,
+        "visible": false,
+        "backgroundColor": "#000000"
       }
     ],
     "security": {

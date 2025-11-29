@@ -1,4 +1,5 @@
 import { createContext, useState, useEffect } from "react";
+import useComm from "../hooks/useComm";
 
 export const CommContext = createContext();
 
@@ -7,6 +8,8 @@ export const CommProvider = ({ children }) => {
   const [isCommActive, setIsCommActive] = useState(false);
   const [connectingChannelId, setConnectingChannelId] = useState(null);
   const [isOpenComm, setIsOpenComm] = useState(false);
+
+  const { subscriberLeave } = useComm();
 
   // Store walkie-talkie messages
   const [walkieMessages, setWalkieMessages] = useState([]);
@@ -28,15 +31,22 @@ export const CommProvider = ({ children }) => {
   const [currentSpeaker, setCurrentSpeaker] = useState(null);
 
   // Function to leave the current channel
-  const leaveChannel = () => {
-    setIsCommActive(false);
-    setActiveChannel(null);
-    setCurrentSpeaker(null);
-    setConnectingChannelId(null);
-    setWalkieMessages([]);
-    setRecentMessages([]);
-    setIsOpenComm(false);
-    setShowCommLog(false);
+  const leaveChannel = (action) => {
+    subscriberLeave.mutate(
+      { channel_id: activeChannel?.channel_id },
+      {
+        onSuccess: () => {
+          setIsCommActive(false);
+          setActiveChannel(null);
+          setCurrentSpeaker(null);
+          setConnectingChannelId(null);
+          setWalkieMessages([]);
+          setRecentMessages([]);
+          setIsOpenComm(false);
+          setShowCommLog(false);
+        },
+      }
+    );
   };
 
   return (

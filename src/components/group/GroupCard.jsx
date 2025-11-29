@@ -1,17 +1,15 @@
 import React, { useContext, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaUsers } from "react-icons/fa";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import useGroups from "../../hooks/useGroup";
 import { AuthContext } from "../../context/AuthContext";
+import useGroups from "../../hooks/useGroup";
 import useChat from "../../hooks/useChat";
 
 export default function GroupCard({ group }) {
   const navigate = useNavigate();
   const { authDetails } = useContext(AuthContext);
   const { useFetchGroupInfo } = useGroups();
-  const { fetchGroupChatMessages } = useChat();
-  const queryClient = useQueryClient();
+  const { getGroupChatMessages } = useChat();
 
   const groupId = group?.group_id;
 
@@ -37,25 +35,17 @@ export default function GroupCard({ group }) {
     return members;
   }, [groupInfoData, authDetails]);
 
-  // --- Use useQuery to watch messages cache and re-render on updates ---
-  const { data: messagesCache } = useQuery({
-    queryKey: ["groupMessages", groupId],
-    queryFn: async () => {
-      // Fetch from server if cache is empty
-      const cached = queryClient.getQueryData(["groupMessages", groupId]);
-      if (cached) return cached;
+  // --- Use getGroupChatMessages (useInfiniteQuery) ---
+  const { data: messagesData, isLoading } = getGroupChatMessages(groupId);
 
-      // Replace this with your actual fetch function
-      const data = await fetchGroupChatMessages(groupId);
-      return data;
-    },
-    enabled: !!groupId,
-    staleTime: Infinity,
-    cacheTime: Infinity,
-  });
+  // Flatten all pages into a single array of messages
+  const messagesCache =
+    messagesData?.pages
+      ?.flatMap((page) => page.data)
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at)) || [];
 
-  const lastMessageData = messagesCache?.data?.length
-    ? messagesCache.data[messagesCache.data.length - 1]
+  const lastMessageData = messagesCache.length
+    ? messagesCache[messagesCache.length - 1]
     : group.lastMessage
     ? {
         message: group.lastMessage,
@@ -66,23 +56,22 @@ export default function GroupCard({ group }) {
     : null;
 
   // Determine sender name
-  let senderName = "Admin";
+  let senderName = "";
   if (lastMessageData) {
     const match =
       groupMembers.find(
         (member) => member.member_id_encrpt === lastMessageData.user_id
       ) || {};
-    senderName = match.member_name || senderName;
+    senderName = match.member_name || `Anonymous${match.member_id}`;
   }
 
-  const lastMessageText = lastMessageData?.message || "No messages yet";
+  const lastMessageText = lastMessageData?.message;
   const lastMessageTime = lastMessageData?.created_at
     ? new Date(lastMessageData.created_at).toLocaleTimeString([], {
         hour: "2-digit",
         minute: "2-digit",
       })
     : "";
-
   return (
     <div
       onClick={() => navigate(`/dashboard/group/${groupId}/chat`)}
@@ -105,7 +94,13 @@ export default function GroupCard({ group }) {
           <span className="text-xs text-gray-400">{lastMessageTime}</span>
         </div>
         <p className="text-gray-400 text-sm truncate">
-          <strong>{senderName}:</strong> {lastMessageText}
+          {isLoading || !lastMessageData ? (
+            <span className="italic text-gray-500">Loading...</span>
+          ) : (
+            <>
+              <strong>{senderName}:</strong> {lastMessageText}
+            </>
+          )}
         </p>
       </div>
     </div>

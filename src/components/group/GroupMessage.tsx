@@ -235,80 +235,77 @@ function GroupMessage({
         className="relative p-0 max-w-[75%] shadow-none text-sm leading-relaxed"
         style={{ width: "fit-content" }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={msg?.id}
-            layout
-            initial={{ opacity: 0.6, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1, x: offsetX }}
-            exit={{ opacity: 0.6, scale: 0.97 }}
-            transition={{ type: "spring", stiffness: 300, damping: 28 }}
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
+        <motion.div
+          key={msg?.id}
+          layout
+          initial={{ opacity: 0.6, scale: 0.97 }}
+          animate={{ opacity: 1, scale: 1, x: offsetX }}
+          exit={{ opacity: 0.6, scale: 0.97 }}
+          transition={{ type: "spring", stiffness: 300, damping: 28 }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          style={{
+            touchAction: "pan-y",
+            userSelect: isDragging ? "none" : "auto",
+            display: "block",
+          }}
+          className={`relative`}
+        >
+          {/* The actual bubble (kept visually same as before) */}
+          <div
+            className={`p-2 pr-3 pb-4 rounded-xl shadow-md ${
+              !showToggleSwitch ? "cursor-pointer" : ""
+            }`}
+            ref={attachRef}
             style={{
-              touchAction: "pan-y",
-              userSelect: isDragging ? "none" : "auto",
-              display: "block",
+              backgroundColor: isMine ? COLORS.mine : COLORS.theirs,
+              color: COLORS.text,
+              border: `1px solid ${COLORS.muted}`,
+              borderTopRightRadius: isMine ? "4px" : "12px",
+              borderTopLeftRadius: isMine ? "12px" : "4px",
             }}
-            className={`relative`}
+            onClick={() => {
+              if (!showToggleSwitch) toggleVisibility();
+            }}
+            title={isVisible ? "Click to hide" : "Click to show"}
           >
-            {/* The actual bubble (kept visually same as before) */}
-            <div
-              className={`p-2 pr-3 pb-4 rounded-xl shadow-md ${
-                !showToggleSwitch ? "cursor-pointer" : ""
-              }`}
-              ref={attachRef}
-              style={{
-                backgroundColor: isMine ? COLORS.mine : COLORS.theirs,
-                color: COLORS.text,
-                border: `1px solid ${COLORS.muted}`,
-                borderTopRightRadius: isMine ? "4px" : "12px",
-                borderTopLeftRadius: isMine ? "12px" : "4px",
-              }}
-              onClick={() => {
-                if (!showToggleSwitch) toggleVisibility();
-              }}
-              title={isVisible ? "Click to hide" : "Click to show"}
-            >
-              {/* Reply preview (if message is replying to another) */}
-              {msg?.tag_mess && (
-                <ReplyPreview
-                  target={repliedMsg}
-                  participants={participants}
-                  myId={authDetails?.user_enid ?? authDetails?.user?.id ?? null}
-                  onPreviewClick={() => {
-                    const key = repliedMsg?.id;
-                    if (key && typeof scrollToMessage === "function")
-                      scrollToMessage(key);
-                  }}
-                  type="group"
-                />
-              )}
-              <MessageContent
-                msg={msg}
-                isVisible={isVisible}
-                isExpanded={isExpanded}
-                setIsExpanded={setIsExpanded}
+            {msg?.tag_mess && (
+              <ReplyPreview
+                target={repliedMsg}
                 participants={participants}
-                onAcceptCall={handleAcceptCall}
-                isMine={isMine}
+                myId={authDetails?.user_enid ?? authDetails?.user?.id ?? null}
+                onPreviewClick={() => {
+                  const key = repliedMsg?.id;
+                  if (key && typeof scrollToMessage === "function")
+                    scrollToMessage(key);
+                }}
+                type="group"
               />
-              <TaggedRow taggedUsers={taggedUsers} isMine={isMine} />
-            </div>
-
-            {/* read receipts for mine */}
-            {isMine && (
-              <span className="ml-1 absolute bottom-1 right-1">
-                {msg?.is_read === "yes" ? (
-                  <IoCheckmarkDone size={14} className="text-oliveHover" />
-                ) : (
-                  <IoCheckmark size={14} className="text-gray-400" />
-                )}
-              </span>
             )}
-          </motion.div>
-        </AnimatePresence>
+            <MessageContent
+              msg={msg}
+              isVisible={isVisible}
+              isExpanded={isExpanded}
+              setIsExpanded={setIsExpanded}
+              participants={participants}
+              onAcceptCall={handleAcceptCall}
+              isMine={isMine}
+            />
+            <TaggedRow taggedUsers={taggedUsers} isMine={isMine} />
+          </div>
+
+          {/* read receipts for mine */}
+          {isMine && (
+            <span className="ml-1 absolute bottom-1 right-1">
+              {msg?.is_read === "yes" ? (
+                <IoCheckmarkDone size={14} className="text-oliveHover" />
+              ) : (
+                <IoCheckmark size={14} className="text-gray-400" />
+              )}
+            </span>
+          )}
+        </motion.div>
       </div>
 
       <div

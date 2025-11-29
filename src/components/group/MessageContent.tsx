@@ -1,7 +1,6 @@
 import {
   COLORS,
   getPreviewText,
-  isRecent,
   MAX_LENGTH,
   renderMessageContent,
   safeString,
@@ -11,6 +10,16 @@ import ChatFilePreview from "../Chat/ChatFilePreview";
 import ChatCallInvite from "../Chat/ChatCallInvite";
 import PropTypes from "prop-types";
 
+interface MessageContentProps {
+  msg: any;
+  isVisible: boolean;
+  isExpanded: boolean;
+  setIsExpanded: (expanded: boolean) => void;
+  participants?: any[];
+  onAcceptCall?: () => void;
+  isMine?: boolean;
+}
+
 function MessageContent({
   msg,
   isVisible,
@@ -19,7 +28,7 @@ function MessageContent({
   participants,
   onAcceptCall,
   isMine,
-}) {
+}: MessageContentProps) {
   const messageText = safeString(msg?.message);
 
   if (!isVisible) {
@@ -55,9 +64,9 @@ function MessageContent({
     return (
       <ChatCallInvite
         msg={msg}
-        isMyChat={isMine}
-        onAcceptCall={onAcceptCall}
-        status={isRecent(msg?.updated_at, 30) ? "Ringing..." : "Call Ended"}
+        isMyChat={!!isMine}
+        onAcceptCall={onAcceptCall ?? (() => {})}
+        //status={isRecent(msg?.updated_at, 30) ? "Ringing..." : "Call Ended"}
         caller={msg?.sender?.member_name || "Unknown"}
       />
     );

@@ -145,4 +145,10 @@ export const settingsManagement = [
     content:
       "Manage all devices logged into your account, view active sessions, and control login history for enhanced security.",
   },
+  {
+    label: "Approve Users",
+    key: "approveUsers",
+    icon: MdVerifiedUser,
+    content: "Approve or reject pending users waiting for access.",
+  },
 ];

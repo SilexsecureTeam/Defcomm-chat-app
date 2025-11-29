@@ -1,37 +1,48 @@
+// DashBoardRoute.jsx
 import { lazy, Suspense, useContext } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
 import Fallback from "../components/Fallback";
 import { ThemeProvider } from "../context/ThemeContext";
+import DashboardLayout from "../layout/DashboardLayout";
+import withSubscription from "../hocs/withSubscription";
 
-// Pages
+// Lazy pages
 const DashboardWrapper = lazy(() => import("../layout/DashboardWrapper"));
-
-const SecureGroupChat = lazy(() => import("../pages/SecureGroupChat"));
 const SecureChatUI = lazy(() => import("../pages/SecureChatUI"));
+const SecureGroupChat = lazy(() => import("../pages/SecureGroupChat"));
+const WalkieTalkie = lazy(() => import("../pages/WalkieTalkie"));
 
-function DashBoardRoute() {
-  const { authDetails } = useContext(AuthContext);
+export default function DashBoardRoute() {
+  const ProtectedChat = withSubscription(SecureChatUI, "enable_chat");
+  const ProtectedGroupChat = withSubscription(SecureGroupChat, "enable_chat");
+  const ProtectedWalkie = withSubscription(WalkieTalkie, "enable_walkie");
 
-  return authDetails?.user?.role === "user" ? (
+  return (
     <ThemeProvider>
       <Suspense fallback={<Fallback />}>
         <Routes>
           <Route path="/" element={<DashboardWrapper />}>
-            <Route index element={<SecureChatUI />} />
-            <Route path="group/:groupId/chat" element={<SecureGroupChat />} />
+            {/* Dashboard Shell (Always Active) */}
+            <Route element={<DashboardLayout />}>
+              {/* Default view */}
+              <Route index element={<ProtectedChat />} />
 
-            <Route path="user/:userId/chat" element={<SecureChatUI />} />
+              {/* Chat Routes */}
+              <Route path="user/:userId/chat" element={<ProtectedChat />} />
+              <Route
+                path="group/:groupId/chat"
+                element={<ProtectedGroupChat />}
+              />
 
-            {/* Catch-all redirect */}
-            <Route path="*" element={<Navigate to="/" />} />
+              {/* Walkie Talkie */}
+              <Route path="comm" element={<ProtectedWalkie />} />
+
+              {/* Catch-all */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Route>
           </Route>
         </Routes>
       </Suspense>
     </ThemeProvider>
-  ) : (
-    <Navigate to="/login" replace />
   );
 }
-
-export default DashBoardRoute;

@@ -1,14 +1,16 @@
 import { useContext } from "react";
 import { ChatContext } from "../../../context/ChatContext";
 import logoIcon from "../../../assets/logo-icon.png";
-import { FiPhone, FiVideo } from "react-icons/fi";
+import { FiInfo } from "react-icons/fi";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
+import { useLocation, useOutletContext } from "react-router-dom";
+
 export default function ChatHeader() {
-  const { setShowCall, setCallType, typingUsers, setModalTitle } =
-    useContext(ChatContext);
+  const { typingUsers } = useContext(ChatContext);
   const location = useLocation();
+  const { setShowRightPanel } = useOutletContext(); // ✅ Get it here
   const chatUserData = location?.state;
+
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-700">
       {chatUserData ? (
@@ -21,7 +23,7 @@ export default function ChatHeader() {
                   : logoIcon
               }
               alt={chatUserData?.contact_name?.split("")[0]}
-              className="rounded-full"
+              className="rounded-full object-cover w-12 h-12"
             />
             <span
               className={`${
@@ -30,7 +32,7 @@ export default function ChatHeader() {
                   : chatUserData?.contact_status === "pending"
                   ? "bg-red-500"
                   : chatUserData?.contact_status === "busy"
-                  ? "bg-yellow"
+                  ? "bg-yellow-400"
                   : "bg-gray-400"
               } w-3 h-3 absolute bottom-[-2%] right-[5%] rounded-full border-[2px] border-white`}
             ></span>
@@ -47,35 +49,17 @@ export default function ChatHeader() {
       ) : (
         <p className="font-bold text-lg">Chat</p>
       )}
-      {chatUserData && (
-        <div className="flex gap-5 text-white *:cursor-pointer">
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            title="Call"
-            className="p-2 rounded-full hover:bg-oliveGreen/80 transition"
-            onClick={() => {
-              setModalTitle("Place a Call");
-              setShowCall(true);
-            }}
-          >
-            <FiPhone />
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-            title="Video Call"
-            className="p-2 rounded-full hover:bg-oliveGreen/80 transition"
-            onClick={() => {
-              setModalTitle("Place a Call");
-              setShowCall(true);
-              setCallType("video");
-            }}
-          >
-            <FiVideo />
-          </motion.button>
-        </div>
-      )}
+
+      {/* ===== TOGGLE RIGHT PANEL ICON ===== */}
+      <motion.button
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowRightPanel(true)} // ✅ Works directly now
+        className="p-2 rounded-full hover:bg-oliveGreen/80 transition lg:hidden"
+        title="View details"
+      >
+        <FiInfo size={20} />
+      </motion.button>
     </div>
   );
 }

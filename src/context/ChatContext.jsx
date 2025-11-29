@@ -5,10 +5,12 @@ import React, {
   useRef,
   useCallback,
 } from "react";
+import { useAppStore } from "./StoreContext";
 
 export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
+  const { get } = useAppStore();
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
   const [callType, setCallType] = useState("audio"); // Default call type
@@ -51,6 +53,15 @@ export const ChatProvider = ({ children }) => {
     messageRefsRef.current = refs;
   }, []);
 
+  useEffect(() => {
+    const init = async () => {
+      const storedChat = await get("selectedChatUser");
+      if (storedChat) {
+        setSelectedChatUser(storedChat);
+      }
+    };
+    init();
+  }, []);
   // scroll helper: accepts the same stable key you use for refs: client_id ?? id_en ?? id_en
   const scrollToMessage = useCallback(async (key, opts = {}) => {
     const {

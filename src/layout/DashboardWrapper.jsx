@@ -1,8 +1,6 @@
-import { useContext, useMemo, useLayoutEffect, useState } from "react";
-import { Outlet, useLocation } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useContext } from "react";
+import { Outlet } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
-import { DashboardContext } from "../context/DashboardContext";
 import { ChatContext } from "../context/ChatContext";
 import { MeetingContext } from "../context/MeetingContext";
 import useChat from "../hooks/useChat";
@@ -16,6 +14,10 @@ import audioController from "../utils/audioController";
 import AddContactInterface from "../components/dashboard/AddContactInterface";
 import useGroups from "../hooks/useGroup";
 import useGroupChannels from "../hooks/useGroupChannel";
+import { CommContext } from "../context/CommContext";
+import useCommChannel from "../hooks/useCommChannel";
+import { FiMic } from "react-icons/fi";
+import CommInterface from "../components/walkietalkie/CommInterface";
 
 const DashboardWrapper = () => {
   const { authDetails } = useContext(AuthContext);
@@ -37,6 +39,14 @@ const DashboardWrapper = () => {
     setCallDuration,
   } = useContext(ChatContext);
 
+  const {
+    isOpenComm,
+    setIsOpenComm,
+    isCommActive,
+    activeChannel,
+    currentSpeaker,
+  } = useContext(CommContext);
+
   // Group Channel
   useGroupChannels({
     token: authDetails?.access_token,
@@ -49,9 +59,15 @@ const DashboardWrapper = () => {
     token: authDetails?.access_token,
   });
 
+  // COMMUNICATION CHANNEL SETUP
+  useCommChannel({
+    channelId: activeChannel?.channel_id,
+    token: authDetails?.access_token,
+  });
+
   return (
     <main
-      className="h-screen w-screen relative overflow-hidden"
+      className="h-screen w-screen relative pt-10 overflow-hidden "
       style={{
         background: `linear-gradient(to bottom, #36460A 10%, #000000 40%)`,
         backgroundPosition: "center",
@@ -59,7 +75,6 @@ const DashboardWrapper = () => {
       }}
     >
       <Outlet />
-
       {showCall && (
         <Modal
           isOpen={showCall}
@@ -101,6 +116,39 @@ const DashboardWrapper = () => {
           closeModal={() => setShowContactModal(false)}
         >
           <AddContactInterface />
+        </Modal>
+      )}
+      {(isOpenComm || (activeChannel && isCommActive)) && (
+        <Modal
+          isOpen={isOpenComm}
+          closeModal={() => setIsOpenComm(false)}
+          canMinimize={true}
+          minimizedContent={
+            <div className="flex items-center gap-3">
+              {/* Mic icon */}
+              <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-green-600">
+                <FiMic size={16} className="text-white" />
+                {currentSpeaker && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                )}
+              </div>
+
+              {/* Text info */}
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">
+                  {currentSpeaker
+                    ? `Speaking: ${currentSpeaker.name}`
+                    : "Walkie Talkie"}
+                </span>
+                <span className="text-xs text-gray-400">
+                  {activeChannel?.name || "No channel name"}
+                </span>
+              </div>
+            </div>
+          }
+          title="Walkie Talkie Communication"
+        >
+          <CommInterface modal={true} />
         </Modal>
       )}
       <IncomingCallWidget />

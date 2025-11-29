@@ -1,40 +1,37 @@
 import React, { useState, useContext, useEffect } from "react";
-import { createMeeting, getAuthToken } from "./Api";
-import {
-  MeetingProvider
-} from "@videosdk.live/react-sdk";
-import { AuthContext } from "../../context/AuthContext";
-import { ChatContext } from "../../context/ChatContext";
-import CallComponentContent from './CallComponentContent'
+import { MeetingContext } from "../../context/MeetingContext";
+import CallComponentContent from "./call/CallComponentContent";
+import ConferenceRoom from "../../pages/ConferenceRoom";
 
-const CallComponent = ({ initialMeetingId, setInitialMeetingId }: { initialMeetingId?: string, setInitialMeetingId: (id: string | null) => void }) => {
-  const [meetingId, setMeetingId] = useState<string | null>(initialMeetingId || null);
-  const [providerMeetingId, setProviderMeetingId] = useState<string | null>(null);
-  const { authDetails } = useContext(AuthContext);
-  const { callType } = useContext(ChatContext);
+type Props = {
+  initialMeetingId?: string;
+  setInitialMeetingId?: (id: string | null) => void;
+  mode?: "CALL" | "CONFERENCE";
+};
+
+const CallComponent = ({ initialMeetingId, setInitialMeetingId }: Props) => {
+  const [meetingId, setMeetingId] = useState(initialMeetingId || null);
+  const { providerMeetingId, setProviderMeetingId } =
+    useContext(MeetingContext);
+
   useEffect(() => {
-    if (meetingId && !providerMeetingId) { // Only set once 
-      setInitialMeetingId(null)
+    if (meetingId && !providerMeetingId && initialMeetingId) {
       setProviderMeetingId(meetingId);
     }
   }, [meetingId]);
+
+  // Keep parent in sync
+  useEffect(() => {
+    if (!meetingId && setInitialMeetingId) {
+      setInitialMeetingId(null);
+    }
+  }, [meetingId]);
+  
   return (
-    <MeetingProvider
-      config={{
-        meetingId: providerMeetingId, // Use updated meetingId
-        name: authDetails?.user?.name || "You",
-        participantId: authDetails?.user?.id,
-        micEnabled: true,
-        webcamEnabled: callType == "video" ? true : false,
-        mode: "CONFERENCE",
-      }}
-      token={getAuthToken()}
-    >
-      <CallComponentContent meetingId={meetingId} setMeetingId={setMeetingId} />
-    </MeetingProvider>
+    <CallComponentContent meetingId={meetingId} setMeetingId={(id) => {
+        setMeetingId(id);
+        if (setInitialMeetingId) setInitialMeetingId(id);
+      }} />
   );
-
 };
-
-
 export default CallComponent;

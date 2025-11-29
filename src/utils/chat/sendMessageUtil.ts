@@ -1,6 +1,7 @@
 import { UseMutationResult } from "@tanstack/react-query";
 import { AxiosInstance } from "axios";
 import { onFailure } from "../notifications/OnFailure";
+import { extractErrorMessage } from "../formmaters";
 
 interface SendMessageParams {
   message: string;
@@ -46,14 +47,17 @@ export const sendMessageUtil = async ({
 
   formData.append("current_chat_user_type", chat_user_type);
   formData.append("current_chat_user", chat_user_id);
-  formData.append("chat_id", chat_id);
+  formData.append("chat_id", chat_id ?? "");
   formData.append("mss_type", mss_type);
 
   try {
     await sendMessageMutation.mutateAsync(formData);
     return true;
   } catch (error) {
-    onFailure({ message: "Message send failed", error: error.message });
+    onFailure({
+      message: "Message send failed",
+      error: extractErrorMessage(error),
+    });
     return false;
   }
 };

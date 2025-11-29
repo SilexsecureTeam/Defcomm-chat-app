@@ -43,22 +43,43 @@ export const onNewNotificationToast = async ({
       ? "📞 Incoming Secure Call"
       : message || "New encrypted message";
 
-  // 🔔 Tauri System Notification
+  // 🔔 Tauri System Notification aligned with in-app toast
   try {
     let permission = await isPermissionGranted();
     if (!permission) {
-      const req = await requestPermission();
-      permission = req === "granted";
+      permission = (await requestPermission()) === "granted";
     }
 
     if (permission) {
+      let title = "";
+      let body = "";
+
+      if (isCall) {
+        title = "📞 Incoming Call";
+        body = `${senderName} is calling you`;
+      } else if (isMention) {
+        title = `💬 ${groupName} (Mention)`;
+        body = `${senderName} mentioned you: ${safeMessage}`;
+      } else if (isReply) {
+        title = `↩️ ${groupName} (Reply)`;
+        body = `${senderName} replied${
+          tagUser ? ` to ${tagUser}` : ""
+        }: ${safeMessage}`;
+      } else if (isGroup) {
+        title = `👥 ${groupName}`;
+        body = `${senderName}: ${safeMessage}`;
+      } else {
+        title = `💬 New Message`;
+        body = `${senderName}: ${safeMessage}`;
+      }
+
       await sendNotification({
-        title: isCall ? "Incoming Call" : groupName || "New Message",
-        body: `${senderName}: ${safeMessage}`,
+        title,
+        body,
       });
     }
   } catch (err) {
-    console.warn("Notification error:", err);
+    console.warn("System notification error:", err);
   }
 
   // 🔔 In-App Toast

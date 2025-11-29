@@ -14,6 +14,9 @@ importers:
       '@tanstack/react-query-devtools':
         specifier: ^5.83.0
         version: 5.83.0(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)
+      '@tanstack/react-query-persist-client':
+        specifier: ^5.90.2
+        version: 5.90.2(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)
       '@tauri-apps/api':
         specifier: ^2
         version: 2.7.0
@@ -22,6 +25,9 @@ importers:
         version: 2.3.1
       '@tauri-apps/plugin-opener':
         specifier: ^2
+        version: 2.4.0
+      '@tauri-apps/plugin-store':
+        specifier: ^2.4.0
         version: 2.4.0
       '@videosdk.live/react-sdk':
         specifier: ^0.3.12
@@ -56,6 +62,9 @@ importers:
       react:
         specifier: ^18.3.1
         version: 18.3.1
+      react-detect-offline:
+        specifier: ^2.4.5
+        version: 2.4.5
       react-dom:
         specifier: ^18.3.1
         version: 18.3.1(react@18.3.1)
@@ -620,13 +629,25 @@ packages:
   '@tanstack/query-core@5.83.0':
     resolution: {integrity: sha512-0M8dA+amXUkyz5cVUm/B+zSk3xkQAcuXuz5/Q/LveT4ots2rBpPTZOzd7yJa2Utsf8D2Upl5KyjhHRY+9lB/XA==}
 
+  '@tanstack/query-core@5.90.2':
+    resolution: {integrity: sha512-k/TcR3YalnzibscALLwxeiLUub6jN5EDLwKDiO7q5f4ICEoptJ+n9+7vcEFy5/x/i6Q+Lb/tXrsKCggf5uQJXQ==}
+
   '@tanstack/query-devtools@5.81.2':
     resolution: {integrity: sha512-jCeJcDCwKfoyyBXjXe9+Lo8aTkavygHHsUHAlxQKKaDeyT0qyQNLKl7+UyqYH2dDF6UN/14873IPBHchcsU+Zg==}
+
+  '@tanstack/query-persist-client-core@5.90.2':
+    resolution: {integrity: sha512-rgJRgqqziPc3KgK2mav2HNR4PoI5e7fkiIrkg85xZ5j29mHPzTp3A0QcceQXVaV9qcPp/SMDJA48A6BpGJGHZg==}
 
   '@tanstack/react-query-devtools@5.83.0':
     resolution: {integrity: sha512-yfp8Uqd3I1jgx8gl0lxbSSESu5y4MO2ThOPBnGNTYs0P+ZFu+E9g5IdOngyUGuo6Uz6Qa7p9TLdZEX3ntik2fQ==}
     peerDependencies:
       '@tanstack/react-query': ^5.83.0
+      react: ^18 || ^19
+
+  '@tanstack/react-query-persist-client@5.90.2':
+    resolution: {integrity: sha512-ii5VbUlxv/zSPWbMT5Sr7VAsmvjup+xu7XeHj/umRiZ3cR7Ulc+6qwFhfehw7sUi1L6/K0RN5hXZjtzPBrUgjA==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.90.2
       react: ^18 || ^19
 
   '@tanstack/react-query@5.83.0':
@@ -716,6 +737,9 @@ packages:
 
   '@tauri-apps/plugin-opener@2.4.0':
     resolution: {integrity: sha512-43VyN8JJtvKWJY72WI/KNZszTpDpzHULFxQs0CJBIYUdCRowQ6Q1feWTDb979N7nldqSuDOaBupZ6wz2nvuWwQ==}
+
+  '@tauri-apps/plugin-store@2.4.0':
+    resolution: {integrity: sha512-PjBnlnH6jyI71MGhrPaxUUCsOzc7WO1mbc4gRhME0m2oxLgCqbksw6JyeKQimuzv4ysdpNO3YbmaY2haf82a3A==}
 
   '@types/babel__core@7.20.5':
     resolution: {integrity: sha512-qoQprZvz5wQFJwMDqeseRXWv3rqMvhgpbXFfVyWhbx9X47POIA6i/+dXefEmZKoAgOaTdaIgNSMqMIU61yRyzA==}
@@ -1469,6 +1493,9 @@ packages:
   queue-microtask@1.2.3:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
 
+  react-detect-offline@2.4.5:
+    resolution: {integrity: sha512-sI13NPEKl3uQp95FT5CwrYzH3DnXCwNP6TnY6NRF5gFDM4NU9KDlbtA6HG2dwhDVS0RYQGXwZW/mHbdf8fCnaw==}
+
   react-dom@18.3.1:
     resolution: {integrity: sha512-5m4nQKp+rZRb09LNH59GM4BxTh9251/ylbKIbpe7TpGxfJ+9kv6BLkLBXIjjspbgbnIBNqlI23tRnTWT0snUIw==}
     peerDependencies:
@@ -2196,11 +2223,23 @@ snapshots:
 
   '@tanstack/query-core@5.83.0': {}
 
+  '@tanstack/query-core@5.90.2': {}
+
   '@tanstack/query-devtools@5.81.2': {}
+
+  '@tanstack/query-persist-client-core@5.90.2':
+    dependencies:
+      '@tanstack/query-core': 5.90.2
 
   '@tanstack/react-query-devtools@5.83.0(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@tanstack/query-devtools': 5.81.2
+      '@tanstack/react-query': 5.83.0(react@18.3.1)
+      react: 18.3.1
+
+  '@tanstack/react-query-persist-client@5.90.2(@tanstack/react-query@5.83.0(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@tanstack/query-persist-client-core': 5.90.2
       '@tanstack/react-query': 5.83.0(react@18.3.1)
       react: 18.3.1
 
@@ -2267,6 +2306,10 @@ snapshots:
   '@tauri-apps/plugin-opener@2.4.0':
     dependencies:
       '@tauri-apps/api': 2.7.0
+
+  '@tauri-apps/plugin-store@2.4.0':
+    dependencies:
+      '@tauri-apps/api': 2.8.0
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -2973,6 +3016,8 @@ snapshots:
       react: 18.3.1
 
   queue-microtask@1.2.3: {}
+
+  react-detect-offline@2.4.5: {}
 
   react-dom@18.3.1(react@18.3.1):
     dependencies:

@@ -1,23 +1,15 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { FaSpinner } from "react-icons/fa6";
-import { useQuery } from "@tanstack/react-query";
-import SEOHelmet from "../../../engine/SEOHelmet";
 import { ChatContext } from "../../../context/ChatContext";
 import useChat from "../../../hooks/useChat";
-import ChatMessage from "../ChatMessage"; // Import the new Message component
-import { getFormattedDate } from "../../../utils/formmaters";
 import { motion } from "framer-motion";
-import { useLocation } from "react-router-dom";
 import SendMessage from "../SendMessage";
 import ChatMessageList from "../ChatMessageList";
 
 const ChatInterface = () => {
-  const { typingUsers } = useContext(ChatContext);
+  const { typingUsers, selectedChatUser } = useContext(ChatContext);
   const { getChatMessages } = useChat();
   const messageRef = useRef(null);
-
-  const location = useLocation();
-  const chatUserData = location?.state;
   const messagesEndRef = useRef(null);
   const {
     data,
@@ -26,22 +18,22 @@ const ChatInterface = () => {
     isFetchingNextPage,
     error,
     isLoading,
-  } = getChatMessages(chatUserData?.contact_id_encrypt);
+  } = getChatMessages(selectedChatUser?.contact_id_encrypt);
 
   const messages = data?.pages.flatMap((page) => page.data) ?? [];
   const chatMeta = data?.pages?.[0]?.chat_meta;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView();
-  }, [typingUsers[Number(chatUserData?.contact_id)]]);
+  }, [typingUsers[Number(selectedChatUser?.contact_id)]]);
+
   return (
-    <div className="flex-1 relative gap-4 h-full">
-      <SEOHelmet title="Secure Chat" />
+    <div className="relative gap-4 h-full flex flex-col">
       <div
         ref={messageRef}
-        className="w-full h-full overflow-y-auto flex flex-col p-4 pb-14"
+        className="flex-1 w-full overflow-y-auto flex flex-col p-4 pb-14"
       >
-        {chatUserData ? (
+        {selectedChatUser ? (
           isLoading ? (
             <div className="h-20 flex justify-center items-center text-oliveGreen gap-2">
               <FaSpinner className="animate-spin text-2xl" /> Loading Messages
@@ -62,7 +54,7 @@ const ChatInterface = () => {
               />
 
               {/* 🔹 Typing indicator as a new bubble */}
-              {typingUsers[chatUserData?.contact_id] && (
+              {typingUsers[selectedChatUser?.contact_id] && (
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -85,7 +77,7 @@ const ChatInterface = () => {
           </p>
         )}
       </div>
-      {chatUserData && (
+      {selectedChatUser && (
         <SendMessage
           messageData={chatMeta}
           scrollRef={messageRef}

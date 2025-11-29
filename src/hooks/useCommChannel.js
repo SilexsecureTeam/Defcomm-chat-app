@@ -7,12 +7,15 @@ import { formatLocalTime } from "../utils/formmaters";
 import { useRadioHiss } from "../utils/walkie-talkie/useRadioHiss";
 import useTrans from "../hooks/useTrans";
 import { onSuccess } from "../utils/notifications/OnSuccess";
+import useComm from "./useComm";
 
 const useCommChannel = ({ channelId, token }) => {
   const pusherRef = useRef(null);
   const channelRef = useRef(null);
   const audioRef = useRef(null); // currently playing voice
   const queueRef = useRef([]); // queued messages
+  const { subscriberJoin } = useComm();
+  const { leaveChannel } = useContext(CommContext);
 
   const { speechToText } = useTrans();
 
@@ -23,7 +26,6 @@ const useCommChannel = ({ channelId, token }) => {
 
   const {
     setIsCommActive,
-    activeChannel,
     setConnectingChannelId,
     setWalkieMessages,
     setRecentMessages,
@@ -44,7 +46,7 @@ const useCommChannel = ({ channelId, token }) => {
       name:
         nextMsg.sender?.id === user?.id
           ? "You"
-          : nextMsg.user_name || nextMsg.display_name || "Unknown",
+          : nextMsg.user_name || nextMsg.display_name || "Anonymous",
       time: formatLocalTime(),
       transcript: nextMsg.transcript || null,
     });
@@ -96,23 +98,53 @@ const useCommChannel = ({ channelId, token }) => {
     const channel = pusher.subscribe(channelName);
 
     channel.bind("pusher:subscription_succeeded", () => {
-      onSuccess({
-        message: "Channel Connected",
-        success: `You are now subscribed to ${
-          activeChannel?.name || channelName
-        }.`,
-      });
-      setIsCommActive(true);
-      setConnectingChannelId(null);
+      subscriberJoin.mutate(
+        { channel_id: channelId },
+        {
+          onSuccess: () => {
+            setIsCommActive(true);
+            setConnectingChannelId(null);
+          },
+        }
+      );
     });
 
     channel.bind("walkie.message.sent", async ({ data }) => {
+      console.log(data);
+
+      if (data.state === "joinChannel") {
+        setWalkieMessages((prev) => [
+          ...prev,
+          {
+            type: "join",
+            ...data,
+            display_name:
+              data.user_id === user?.id ? "You" : data.user_name || "Anonymous",
+          },
+        ]);
+        return;
+      }
+
+      if (data.state === "leaveChannel") {
+        setWalkieMessages((prev) => [
+          ...prev,
+          {
+            type: "leave",
+            ...data,
+            display_name:
+              data.user_id === user?.id ? "You" : data.user_name || "Anonymous",
+          },
+        ]);
+        return;
+      }
+
       const msg = {
         ...data.mss_chat,
         display_name:
           data.sender?.id === user?.id
             ? "You"
-            : data.mss_chat.user_name || "Unknown",
+            : data.mss_chat.user_name || "Anonymous",
+        type: "voice",
       };
 
       // update message lists immediately (so UI shows the incoming message item)
@@ -153,11 +185,10 @@ const useCommChannel = ({ channelId, token }) => {
     channelRef.current = channel;
 
     return () => {
+      // Leave the channel on unmount
+      leaveChannel();
       pusher.unsubscribe(channelName);
       pusher.disconnect();
-      setIsCommActive(false);
-      setConnectingChannelId(null);
-      setCurrentSpeaker(null);
 
       if (audioRef.current) {
         audioRef.current.pause();

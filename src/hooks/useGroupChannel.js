@@ -20,12 +20,10 @@ const useGroupChannels = ({ groups, token }) => {
   useEffect(() => {
     if (!token || !groups?.length) return;
 
-    // Disconnect previous instance
     if (pusherRef.current) {
       pusherRef.current.disconnect();
     }
 
-    // Create Pusher instance
     const pusher = new Pusher(import.meta.env.VITE_PUSHER_APP_KEY, {
       cluster: "mt1",
       wsHost: import.meta.env.VITE_PUSHER_HOST,
@@ -36,32 +34,28 @@ const useGroupChannels = ({ groups, token }) => {
       auth: { headers: { Authorization: `Bearer ${token}` } },
     });
 
-    // Subscribe to all joined groups
     groups.forEach((group) => {
       const channelName = `private-group.${group.group_id}`;
       const channel = pusher.subscribe(channelName);
 
-      channel.bind("pusher:subscription_succeeded", () => {
+      const handleSubSuccess = () =>
         setGroupConnections((prev) => ({
           ...prev,
           [group.group_id]: "connected",
         }));
-        //toast.success(`Connected to ${group.group_name}`);
-      });
 
-      channel.bind("pusher:subscription_error", () => {
+      const handleSubError = () =>
         setGroupConnections((prev) => ({
           ...prev,
           [group.group_id]: "error",
         }));
-        //toast.error(`Failed to connect to ${group.group_name}`);
-      });
 
-      channel.bind("group.message.sent", ({ data }) => {
-        const senderId = data?.data?.user_id;
+      const handleMessage = ({ data }) => {
+        const incomingMsg = data.data;
+        const senderId = incomingMsg.user_id;
+
         console.log("Group message received:", data);
 
-        // Typing indicator
         if (data?.state === "is_typing") {
           setGroupUserTyping?.((prev) => ({
             ...prev,
@@ -78,8 +72,9 @@ const useGroupChannels = ({ groups, token }) => {
 
         if (!senderId) return;
 
-        // Show toast if not my message
-        if (senderId !== authDetails?.user_enid) {
+        const isMyChat = senderId === authDetails?.user?.id;
+
+        if (!isMyChat) {
           addNotification(data);
           onNewNotificationToast({
             senderName: data?.sender?.name,
@@ -87,46 +82,68 @@ const useGroupChannels = ({ groups, token }) => {
             type: "group",
             groupName: group.group_name,
             onClick: () => {
-              markAsSeen(data?.data?.id);
-              navigate(`/dashboard/group/${data?.data?.user_to}/chat`);
+              markAsSeen(incomingMsg.id);
+              navigate(`/dashboard/group/${incomingMsg.user_to}/chat`);
             },
             isChatVisible: chatVisibility,
-            tagMess: data?.data?.tag_mess,
-            tagUser: data?.data?.tag_user,
+            tagMess: incomingMsg.tag_mess,
+            tagUser: incomingMsg.tag_user,
             myId: authDetails?.user_enid,
           });
         }
 
-        // Cache management for that group's messages
         queryClient.setQueryData(["groupMessages", group.group_id], (old) => {
-          if (!old?.data) return old;
-          const exists = old.data.some((msg) => msg.id === data.data.id);
-          const isMyChat = data.data.user_id === authDetails?.user?.id;
-          return exists
-            ? old
-            : {
-                ...old,
-                data: [
-                  ...old.data,
-                  {
-                    ...data.data,
-                    message: data?.message,
-                    is_my_chat: isMyChat ? "yes" : "no",
-                  },
-                ].sort(
-                  (a, b) => new Date(a.created_at) - new Date(b.created_at)
-                ),
-              };
+          if (!old || !Array.isArray(old.pages)) return old;
+
+          const lastPage = old.pages[old.pages.length - 1];
+
+          // Avoid duplicates
+          const exists = lastPage.data.some((msg) => msg.id === incomingMsg.id);
+          if (exists) return old;
+
+          const newPage = {
+            ...lastPage,
+            data: [
+              ...lastPage.data,
+              {
+                ...incomingMsg,
+                message: data.message, // ensure latest message is set
+                is_my_chat: isMyChat ? "yes" : "no",
+              },
+            ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
+          };
+
+          return {
+            ...old,
+            pages: [...old.pages.slice(0, -1), newPage],
+          };
         });
-      });
+      };
+
+      // Bind with named handlers
+      channel.bind("pusher:subscription_succeeded", handleSubSuccess);
+      channel.bind("pusher:subscription_error", handleSubError);
+      channel.bind("group.message.sent", handleMessage);
+
+      // Cleanup for this group
+      return () => {
+        channel.unbind("pusher:subscription_succeeded", handleSubSuccess);
+        channel.unbind("pusher:subscription_error", handleSubError);
+        channel.unbind("group.message.sent", handleMessage);
+        pusher.unsubscribe(channelName);
+      };
     });
 
     pusherRef.current = pusher;
 
-    // Cleanup
     return () => {
       groups.forEach((group) => {
-        pusher.unsubscribe(`private-group.${group.group_id}`);
+        const channelName = `private-group.${group.group_id}`;
+        const channel = pusher.channel(channelName);
+        if (channel) {
+          channel.unbind_all();
+          pusher.unsubscribe(channelName);
+        }
       });
       pusher.disconnect();
     };
@@ -135,9 +152,7 @@ const useGroupChannels = ({ groups, token }) => {
   return () => {
     try {
       pusherRef.current?.disconnect();
-    } catch (e) {
-      console.warn("Cleanup error:", e);
-    }
+    } catch (e) {}
   };
 };
 

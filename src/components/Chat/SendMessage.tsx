@@ -14,6 +14,8 @@ import { onPrompt } from "../../utils/notifications/onPrompt";
 import { FaTimes } from "react-icons/fa";
 import { htmlToPlainAndRaw } from "../../utils/chat/messageUtils";
 import ScrollToBottomButton from "./ScrollToBottom";
+import { checkIfAtBottom } from "../../utils/programs";
+import { useEffect } from "react";
 
 function SendMessage({
   messageData,
@@ -34,7 +36,9 @@ function SendMessage({
     () =>
       (ctxMembers &&
         Array.isArray(ctxMembers) &&
-        ctxMembers.filter((m) => m?.member_id !== authDetails?.user?.id)) ||
+        ctxMembers.filter(
+          (m) => m?.member_id !== authDetails?.user?.id && m?.member_name
+        )) ||
       [],
     [ctxMembers]
   );
@@ -63,6 +67,13 @@ function SendMessage({
     clearReply();
     typingSent.current = false;
   }
+
+  useEffect(() => {
+    if (messageData?.chat_id) {
+      clearMessageInput();
+      setReplyTo(null);
+    }
+  }, [messageData?.chat_id]);
 
   const clearReply = () => setReplyTo?.(null);
 
@@ -149,7 +160,7 @@ function SendMessage({
     if (!mentionQuery) return groupMembers.slice(0, 6);
     const q = mentionQuery.toLowerCase();
     return groupMembers
-      .filter((m) => m.member_name.toLowerCase().includes(q))
+      .filter((m) => m.member_name && m.member_name?.toLowerCase()?.includes(q))
       .slice(0, 6);
   }, [mentionQuery, groupMembers]);
 
@@ -340,14 +351,14 @@ function SendMessage({
     typingSent.current = false;
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     const el = editorRef.current;
     const html = (el?.innerHTML || "").replace(/<br>/g, "\n");
     const { message, mentions } = htmlToPlainAndRaw(html);
 
     if (message.trim().length === 0 && !file) return;
 
-    sendMessageUtil({
+    await sendMessageUtil({
       client,
       message,
       file,
@@ -359,6 +370,9 @@ function SendMessage({
       tag_users: tagUsers,
       sendMessageMutation,
     } as any);
+    if (!checkIfAtBottom(scrollRef, 200)) {
+      messagesEndRef.current?.scrollIntoView();
+    }
   };
 
   return (
@@ -399,14 +413,17 @@ function SendMessage({
                 {(() => {
                   const id = replyTo?.user_id;
                   const member =
-                    ctxMembers?.find((m) => m.member_id_encrpt === id) || null;
+                    ctxMembers?.find(
+                      (m: { member_id_encrpt: any }) =>
+                        m.member_id_encrpt === id
+                    ) || null;
                   const name =
                     member?.member_name ||
                     (id === authDetails?.user_enid
                       ? authDetails?.user?.name
                       : replyTo?.user_type === "user"
                       ? replyTo?.contact_name
-                      : `User ${id}`);
+                      : `Anonymous`);
                   const parts = (name || "U").trim().split(" ");
                   return (
                     parts.length > 1
@@ -425,8 +442,9 @@ function SendMessage({
                   : replyTo?.user_type === "user"
                   ? replyTo?.contact_name
                   : ctxMembers?.find(
-                      (m) => m.member_id_encrpt === replyTo?.user_id
-                    )?.member_name || `User ${replyTo?.user_id}`}
+                      (m: { member_id_encrpt: any }) =>
+                        m.member_id_encrpt === replyTo?.user_id
+                    )?.member_name || `Anonymous`}
               </div>
 
               <div

@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdClose, MdFullscreen, MdFullscreenExit } from "react-icons/md";
 import { ChatContext } from "../../context/ChatContext";
@@ -20,6 +20,12 @@ const Modal = ({
 }: MinimizableModalProps) => {
   const [isMinimized, setIsMinimized] = useState(false);
   const { setModalTitle, modalTitle } = useContext(ChatContext);
+
+  useEffect(() => {
+    return () => {
+      setModalTitle("Defcomm");
+    };
+  }, [setModalTitle]);
 
   if (!isOpen && !isMinimized) return null;
 

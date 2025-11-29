@@ -13,12 +13,8 @@ import mail from "../assets/mail-secure.png";
 import secure from "../assets/secure.png";
 import talkie from "../assets/walkie-talkie.png";
 import LoginForm from "../components/LoginForm";
-import LoginTwo from "../components/LoginTwo";
 import BackToTopButton from "../components/BackToTopButton";
-import { FaSearch } from "react-icons/fa";
 import { MdOutlineMoreVert } from "react-icons/md";
-
-import SEOHelmet from "../engine/SEOHelmet";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
@@ -32,15 +28,14 @@ const DefcommLogin = () => {
   const rotateScroll = useTransform(scrollYProgress, [0, 1], [0, 360]); // Rotates scroll image
 
   useEffect(() => {
+    console.log(authDetails);
+
     if (authDetails?.user) {
       navigate("/dashboard", { replace: true });
     }
   }, [authDetails, navigate]);
   return (
     <>
-      {/* SEO Content */}
-      <SEOHelmet title="Login" />
-
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

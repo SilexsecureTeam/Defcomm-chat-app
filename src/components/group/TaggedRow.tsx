@@ -6,7 +6,7 @@ function TaggedRow({ taggedUsers, isMine }) {
     <div className="mt-2 flex flex-wrap gap-2 items-center">
       <span
         className="text-xs opacity-80 mr-2"
-        style={{ color: isMine ? COLORS.muted : COLORS.brass }}
+        style={{ color: isMine ? "#bbb" : COLORS.brass }}
       >
         Tagged:
       </span>
@@ -15,7 +15,7 @@ function TaggedRow({ taggedUsers, isMine }) {
           key={u.id}
           className={`px-2 py-0.5 rounded-md ${
             isMine
-              ? "text-[#cbd081] bg-oliveHover/10"
+              ? "text-[#d8e062] bg-[#d8e062]/10"
               : "text-oliveHover bg-oliveGreen/10"
           } text-[11px] hover:bg-oliveGreen/20`}
           title={u.name}

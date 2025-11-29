@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Defcomm Loading...</title>
+    <style>
+        /* Defcomm theme colors */
+        :root {
+            --olive-light: #36460A;
+            --olive-dark: #101500;
+            --olive: #759719;
+            --olive-green: #89AF20;
+            --olive-hover: #C6FC2B;
+            --yellow: #CDB30A;
+        }
+
+        /* Reset default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, var(--olive-dark), var(--olive));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 24px;
+            /* spacing between elements */
+        }
+
+        .loading-container img {
+            width: 128px;
+            height: 128px;
+        }
+
+        .app-name {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--yellow);
+        }
+
+        .loading-text {
+            font-size: 1.125rem;
+            /* ~18px */
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+
+        .progress-bar {
+            width: 192px;
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            width: 100%;
+            background-color: var(--yellow);
+            animation: load 2s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes load {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="loading-container">
+        <!-- Logo -->
+        <img src="./main-logo.png" alt="Logo">
+
+        <!-- App Name -->
+        <h1 class="app-name">Defcomm</h1>
+
+        <!-- Loading Text -->
+        <div class="loading-text">Launching...</div>
+
+        <!-- Optional progress bar -->
+        <div class="progress-bar">
+            <div class="progress-bar-inner"></div>
+        </div>
+    </div>
+</body>
+
+</html>

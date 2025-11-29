@@ -57,6 +57,46 @@ const useChat = () => {
     return data || [];
   };
 
+  const getGroupChatMessages = (groupId) => {
+    return useInfiniteQuery({
+      queryKey: ["groupMessages", groupId],
+      queryFn: async ({ pageParam = 1 }) => {
+        // ✅ Check cache first before hitting API
+        const cached = queryClient.getQueryData(["groupMessages", groupId]);
+
+        if (cached) {
+          const alreadyFetched = cached.pages.find(
+            (page) => page?.chat_meta?.current_page === pageParam
+          );
+          if (alreadyFetched) {
+            return alreadyFetched; // return cached page, no refetch
+          }
+        }
+
+        // Otherwise, fetch from API
+        let url = `/user/chat/messages/${groupId}/group`;
+        if (pageParam > 1) {
+          url += `?page=${pageParam}`;
+        }
+
+        const { data } = await client.get(url);
+        return data;
+      },
+      getNextPageParam: (lastPage) => {
+        if (!lastPage?.chat_meta) return undefined;
+
+        const { current_page, last_page } = lastPage.chat_meta;
+        return current_page < last_page ? current_page + 1 : undefined;
+      },
+      enabled: !!authDetails && !!groupId,
+      staleTime: Infinity, // never stale
+      cacheTime: Infinity, // keep cached forever
+      refetchOnMount: false,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    });
+  };
+
   const getChatMessages = (peerId) => {
     return useInfiniteQuery({
       queryKey: ["chatMessages", peerId],
@@ -80,7 +120,7 @@ const useChat = () => {
         }
 
         const { data } = await client.get(url);
-        return data; // { chat_meta, data: [...] }
+        return data;
       },
       getNextPageParam: (lastPage) => {
         if (!lastPage?.chat_meta) return undefined;
@@ -139,6 +179,7 @@ const useChat = () => {
     fetchChatMessages,
     getCallLogs,
     getChatMessages,
+    getGroupChatMessages,
     updateCallLog,
     fetchGroupChatMessages,
     useFetchContacts,

@@ -4,6 +4,22 @@ import { MdAttachFile, MdOutlineEmojiEmotions } from "react-icons/md";
 import { ChatContext } from "../../context/ChatContext";
 import { FaPaperPlane, FaSpinner } from "react-icons/fa";
 
+type InputBoxProps = {
+  insertMentionChip: (user: any) => void;
+  mentionIndex: number;
+  sendMessageMutation: { isPending: boolean };
+  editorRef: React.RefObject<HTMLDivElement | null>;
+  onInput: React.FormEventHandler<HTMLDivElement>;
+  onKeyDown: React.KeyboardEventHandler<HTMLDivElement>;
+  onFocus: React.FocusEventHandler<HTMLDivElement>;
+  onBlur: React.FocusEventHandler<HTMLDivElement>;
+  handleSendMessage: () => void;
+  messageData: { chat_user_type?: string };
+  showMentionMenu: boolean;
+  mentionSuggestions: any[];
+  replyTo?: { id?: string };
+};
+
 const InputBox = ({
   insertMentionChip,
   mentionIndex,
@@ -18,13 +34,13 @@ const InputBox = ({
   showMentionMenu,
   mentionSuggestions,
   replyTo,
-}) => {
+}: InputBoxProps) => {
   const { file, setFile } = useContext(ChatContext) as any;
 
   /* ---------- Helpers ---------- */
 
   // Ensure editor contains at least one text node (prevents caret-placement failures)
-  function ensureFocusableTextNode(el) {
+  function ensureFocusableTextNode(el: HTMLDivElement) {
     if (!el) return;
     // If element is empty or only contains <br>, normalize to a text node with NBSP
     const textContent = el.textContent || "";
@@ -38,9 +54,9 @@ const InputBox = ({
   }
 
   // Find the deepest last text node inside el
-  function getLastTextNode(el) {
+  function getLastTextNode(el: HTMLDivElement) {
     if (!el) return null;
-    let node = el;
+    let node: Node = el;
     while (node && node.lastChild) {
       node = node.lastChild;
     }
@@ -182,9 +198,7 @@ const InputBox = ({
         onPaste={(e) => {
           // paste plain text to avoid unexpected HTML
           e.preventDefault();
-          const text = (e.clipboardData || window.clipboardData).getData(
-            "text"
-          );
+          const text = e.clipboardData.getData("text");
           document.execCommand("insertText", false, text);
         }}
         tabIndex={0}

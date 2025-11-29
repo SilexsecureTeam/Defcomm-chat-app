@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FaAnglesDown } from "react-icons/fa6";
+import { checkIfAtBottom } from "../../utils/programs";
 
 type Props = {
   messagesEndRef: React.RefObject<HTMLDivElement>;
@@ -16,15 +17,6 @@ export default function ScrollToBottomButton({
   const [visible, setVisible] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
-  // Check if user is at bottom
-  const checkIfAtBottom = () => {
-    const container = containerRef?.current;
-    if (!container) return true;
-    const distanceFromBottom =
-      container.scrollHeight - (container.scrollTop + container.clientHeight);
-    return distanceFromBottom <= threshold;
-  };
-
   // Scroll to bottom
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -37,7 +29,7 @@ export default function ScrollToBottomButton({
     if (!container) return;
 
     const handleScroll = () => {
-      if (checkIfAtBottom()) {
+      if (checkIfAtBottom(containerRef, threshold)) {
         setVisible(false);
       } else {
         setVisible(true);
@@ -50,7 +42,7 @@ export default function ScrollToBottomButton({
 
   // Increment unread count when new messages arrive
   useEffect(() => {
-    if (!checkIfAtBottom()) {
+    if (!checkIfAtBottom(containerRef, threshold)) {
       setVisible(true);
     }
   }, [messagesEndRef]); // trigger when new message renders

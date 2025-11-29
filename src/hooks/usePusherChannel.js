@@ -10,12 +10,14 @@ import { queryClient } from "../services/query-client";
 import { ChatContext } from "../context/ChatContext";
 import { NotificationContext } from "../context/NotificationContext";
 import { AuthContext } from "../context/AuthContext";
-
+import useAuth from "./useAuth";
+import { onLogoutToast } from "../utils/notifications/onLogoutToast";
 const usePusherChannel = ({ userId, token, showToast = true }) => {
   const pusherRef = useRef(null);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const { authDetails } = useContext(AuthContext);
+  const { authDetails, setLogoutSignal, updateAuth } = useContext(AuthContext);
   const { setTypingUsers, setCallMessage, chatVisibility, setFinalCallData } =
     useContext(ChatContext);
   const { addNotification, markAsSeen } = useContext(NotificationContext);
@@ -56,6 +58,27 @@ const usePusherChannel = ({ userId, token, showToast = true }) => {
         newMessage.state === "callUpdate" ? newMessage?.mss : newMessage?.data;
       const isCall = data?.state === "call";
       console.log(newMessage);
+      if (
+        data?.state === "logout" &&
+        data?.device === "all" &&
+        authDetails?.device_id !== data?.device
+      ) {
+        setLogoutSignal(true);
+        // Clear auth state
+        updateAuth(null);
+        // Selectively clear cache (safer than full clear)
+        queryClient.removeQueries();
+
+        setTimeout(() => {
+          // Redirect
+          navigate("/login", {
+            state: { from: null, fromLogout: true },
+            replace: true,
+          });
+
+          onLogoutToast();
+        }, 3000); // give user 3s to read the message
+      }
 
       // 🔔 Handle call messages
       if (isCall) {
@@ -71,11 +94,11 @@ const usePusherChannel = ({ userId, token, showToast = true }) => {
         audioController.playRingtone(receiverTone, true);
       }
 
-      const senderId = newMessage?.sender?.id_en;
+      const senderId = newMessage?.sender?.id;
 
-      const isMyChat = newMessage?.sender?.id_en === authDetails?.user?.id;
+      const isMyChat = newMessage?.sender?.id === authDetails?.user?.id;
       const cacheKeyUserId = isMyChat
-        ? newMessage?.receiver?.id_en // I sent it → save under receiver
+        ? newMessage?.receiver?.id // I sent it → save under receiver
         : senderId; // They sent it → save under sender
 
       // Cache update always (multi-device sync)
@@ -119,6 +142,7 @@ const usePusherChannel = ({ userId, token, showToast = true }) => {
         data?.state !== "is_typing" &&
         data?.state !== "callUpdate" &&
         data?.state !== "call" &&
+        data?.state !== "logout" &&
         !isMyChat;
 
       if (shouldToast) {
@@ -132,7 +156,7 @@ const usePusherChannel = ({ userId, token, showToast = true }) => {
             markAsSeen(newMessage?.data?.id);
             navigate(`/dashboard/user/${newMessage?.data?.user_id}/chat`, {
               state: {
-                contact_id_encrypt: newMessage?.sender?.id_en,
+                contact_id_encrypt: newMessage?.sender?.id,
                 contact_id: newMessage?.sender?.id,
                 contact_name: newMessage?.sender?.name,
               },
@@ -166,34 +190,50 @@ const usePusherChannel = ({ userId, token, showToast = true }) => {
           duration: newMessage?.call?.call_duration,
           state: newMessage?.call?.call_state,
         });
-
-        // // 🔇 If another device picked the call, stop ringtone + clear callMessage
-        // if (newMessage?.call?.call_state === "pick") {
-        //   audioController.stopRingtone();
-        //   setCallMessage((prev) => {
-        //     if (prev?.user_id === newMessage?.mss?.user_id) {
-        //       return { ...prev, status: "picked" };
-        //     }
-        //     return prev;
-        //   });
-        // }
-        queryClient.setQueryData(["chatMessages", cacheKeyUserId], (old) => {
-          if (!old || !Array.isArray(old.data)) return old;
-          return {
-            ...old,
-            data: old.data.map((msg) =>
-              msg.id === newMessage?.mss?.id
-                ? {
-                    ...msg,
-                    call_state: newMessage?.call?.call_state,
-                    call_duration: newMessage?.call?.call_duration,
-                  }
-                : msg
-            ),
-          };
-        });
         return;
       }
+
+      // // 🔇 If another device picked the call, stop ringtone + clear callMessage
+      // if (newMessage?.call?.call_state === "pick") {
+      //   audioController.stopRingtone();
+      //   setCallMessage((prev) => {
+      //     if (prev?.user_id === newMessage?.mss?.user_id) {
+      //       return { ...prev, status: "picked" };
+      //     }
+      //     return prev;
+      //   });
+      // }
+      console.log(cacheKeyUserId);
+
+      queryClient.setQueryData(["chatMessages", cacheKeyUserId], (old) => {
+        if (!old || !Array.isArray(old.pages)) return old;
+        console.log(old);
+
+        const lastPage = old.pages[old.pages.length - 1];
+
+        // Avoid duplicates
+        const exists = lastPage.data.some(
+          (msg) => msg.id === newChatMessage.id
+        );
+        if (exists) return old;
+
+        const newPage = {
+          ...lastPage,
+          data: [
+            ...lastPage.data,
+            {
+              ...newChatMessage,
+              message: newMessage.message,
+              is_my_chat: isMyChat ? "yes" : "no",
+            },
+          ].sort((a, b) => new Date(a.created_at) - new Date(b.created_at)),
+        };
+
+        return {
+          ...old,
+          pages: [...old.pages.slice(0, -1), newPage],
+        };
+      });
     });
 
     channel.bind("pusher:subscription_error", (status) => {

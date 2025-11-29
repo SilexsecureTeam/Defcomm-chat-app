@@ -5,14 +5,16 @@ import { AuthContext } from "../context/AuthContext";
 import { onSuccess } from "../utils/notifications/OnSuccess";
 import { onFailure } from "../utils/notifications/OnFailure";
 import { extractErrorMessage } from "../utils/formmaters";
+import { CommContext } from "../context/CommContext";
 
 const useComm = () => {
   const { authDetails } = useContext(AuthContext);
+
   const token = authDetails?.access_token;
   const client = axiosClient(token);
   const queryClient = useQueryClient();
 
-  // 🔁 Fetch Walkie-Talkie Channels
+  // Fetch Walkie-Talkie Channels
   const getChannelList = useQuery({
     queryKey: ["channelList"],
     queryFn: async () => {
@@ -26,7 +28,7 @@ const useComm = () => {
   });
 
   const getInvitedChannelList = useQuery({
-    queryKey: ["channelList Invited"],
+    queryKey: ["channelList Active"],
     queryFn: async () => {
       const { data } = await client.get(
         "/walkietalkie/channellistinvited/active"
@@ -58,7 +60,7 @@ const useComm = () => {
     mutationFn: (payload) =>
       client.post("/walkietalkie/channelcreate", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["channelList"]);
+      queryClient.invalidateQueries(["channelList Active"]);
       onSuccess({
         message: "Comm channel successfully created!",
         success: "New channel added",
@@ -76,7 +78,7 @@ const useComm = () => {
     mutationFn: (payload) =>
       client.post("/walkietalkie/channelinvite", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["channelList"]);
+      queryClient.invalidateQueries(["channelList Active"]);
     },
     onError: (err) => {
       onFailure({
@@ -89,7 +91,7 @@ const useComm = () => {
     mutationFn: (payload) =>
       client.post("/walkietalkie/channelinvitedstatus", payload),
     onSuccess: () => {
-      queryClient.invalidateQueries(["channelList Invited"]);
+      queryClient.invalidateQueries(["channelList Active"]);
       queryClient.invalidateQueries(["channelList Invited Pending"]);
       onSuccess({
         message: "Channel invitation status updated!",
@@ -108,8 +110,7 @@ const useComm = () => {
     mutationFn: (channelId) =>
       client.get(`/walkietalkie/channedelete/${channelId}`),
     onSuccess: () => {
-      queryClient.invalidateQueries(["channelList"]);
-      queryClient.invalidateQueries(["channelList Invited"]);
+      queryClient.invalidateQueries(["channelList Active"]);
       onSuccess({
         message: "Channel deleted successfully!",
         success: "Deleted",
@@ -138,6 +139,53 @@ const useComm = () => {
     },
   });
 
+  const subscriberJoin = useMutation({
+    mutationFn: (payload) =>
+      client.post("/walkietalkie/subscriberJoin", payload),
+    onSuccess: () => {
+      onSuccess({
+        message: "Channel Connected",
+        success: `You are now subscribed to the channel.`,
+      });
+      queryClient.invalidateQueries(["subscriberActive"]);
+    },
+    onError: (err) => {
+      onFailure({
+        message: "Unable to connect to the channel",
+        error: extractErrorMessage(err),
+      });
+    },
+  });
+
+  const subscriberLeave = useMutation({
+    mutationFn: (payload) =>
+      client.post("/walkietalkie/subscriberLeave", payload),
+    // onSuccess: () => {
+    //   onSuccess({
+    //     message: "Disconnected from the channel",
+    //     success: "Disconnected",
+    //   });
+    // },
+    onError: (err) => {
+      onFailure({
+        message: "Unable to disconnect from the channel",
+        error: extractErrorMessage(err),
+      });
+    },
+  });
+
+  const getSubscriberActive = (channelId) =>
+    useQuery({
+      queryKey: ["subscriberActive", channelId],
+      queryFn: async () => {
+        const { data } = await client.get(
+          `/walkietalkie/subscriberActive/${channelId}`
+        );
+        return data?.data || [];
+      },
+      enabled: !!channelId,
+    });
+
   return {
     getChannelList,
     createChannelMutation,
@@ -147,6 +195,9 @@ const useComm = () => {
     updateChannelInviteStatus,
     broadcastMessage,
     deleteChannel,
+    subscriberJoin,
+    subscriberLeave,
+    getSubscriberActive,
   };
 };
 
