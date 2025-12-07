@@ -14,8 +14,6 @@ import { onPrompt } from "../../utils/notifications/onPrompt";
 import { FaTimes } from "react-icons/fa";
 import { htmlToPlainAndRaw } from "../../utils/chat/messageUtils";
 import ScrollToBottomButton from "./ScrollToBottom";
-import { checkIfAtBottom } from "../../utils/programs";
-import { useEffect } from "react";
 
 function SendMessage({
   messageData,
@@ -36,9 +34,7 @@ function SendMessage({
     () =>
       (ctxMembers &&
         Array.isArray(ctxMembers) &&
-        ctxMembers.filter(
-          (m) => m?.member_id !== authDetails?.user?.id && m?.member_name
-        )) ||
+        ctxMembers.filter((m) => m?.member_id !== authDetails?.user?.id)) ||
       [],
     [ctxMembers]
   );
@@ -66,14 +62,8 @@ function SendMessage({
     setTagUsers([]);
     clearReply();
     typingSent.current = false;
+    messagesEndRef.current?.scrollIntoView();
   }
-
-  useEffect(() => {
-    if (messageData?.chat_id) {
-      clearMessageInput();
-      setReplyTo(null);
-    }
-  }, [messageData?.chat_id]);
 
   const clearReply = () => setReplyTo?.(null);
 
@@ -160,7 +150,7 @@ function SendMessage({
     if (!mentionQuery) return groupMembers.slice(0, 6);
     const q = mentionQuery.toLowerCase();
     return groupMembers
-      .filter((m) => m.member_name && m.member_name?.toLowerCase()?.includes(q))
+      .filter((m) => m.member_name.toLowerCase().includes(q))
       .slice(0, 6);
   }, [mentionQuery, groupMembers]);
 
@@ -351,14 +341,14 @@ function SendMessage({
     typingSent.current = false;
   };
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = () => {
     const el = editorRef.current;
     const html = (el?.innerHTML || "").replace(/<br>/g, "\n");
     const { message, mentions } = htmlToPlainAndRaw(html);
 
     if (message.trim().length === 0 && !file) return;
 
-    await sendMessageUtil({
+    sendMessageUtil({
       client,
       message,
       file,
@@ -370,9 +360,6 @@ function SendMessage({
       tag_users: tagUsers,
       sendMessageMutation,
     } as any);
-    if (!checkIfAtBottom(scrollRef, 200)) {
-      messagesEndRef.current?.scrollIntoView();
-    }
   };
 
   return (
@@ -423,7 +410,7 @@ function SendMessage({
                       ? authDetails?.user?.name
                       : replyTo?.user_type === "user"
                       ? replyTo?.contact_name
-                      : `Anonymous`);
+                      : `User ${id}`);
                   const parts = (name || "U").trim().split(" ");
                   return (
                     parts.length > 1
@@ -444,7 +431,7 @@ function SendMessage({
                   : ctxMembers?.find(
                       (m: { member_id_encrpt: any }) =>
                         m.member_id_encrpt === replyTo?.user_id
-                    )?.member_name || `Anonymous`}
+                    )?.member_name || `User ${replyTo?.user_id}`}
               </div>
 
               <div
@@ -471,7 +458,7 @@ function SendMessage({
         </div>
       )}
 
-      {file && <FileToSendPreview desktop={desktop} />}
+      {file && <FileToSendPreview />}
       <ScrollToBottomButton
         containerRef={scrollRef}
         messagesEndRef={messagesEndRef}

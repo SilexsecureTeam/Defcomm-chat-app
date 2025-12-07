@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
-import { AuthContext, AuthProvider } from "./context/AuthContext";
+import { AuthProvider } from "./context/AuthContext";
 import { ToastContainer } from "react-toastify";
 import FallBack from "./components/Fallback";
 import { DashboardContextProvider } from "./context/DashboardContext";
@@ -58,7 +58,7 @@ const App = () => {
                           </Routes>
                         </Router>
                       </Suspense>
-                      <NetworkStatusBanner />
+                      {/* <NetworkStatusBanner /> */}
                       <ToastContainer
                         autoClose={2000}
                         draggable

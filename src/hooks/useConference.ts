@@ -21,8 +21,6 @@ const useConference = () => {
     },
     enabled: !!authDetails?.user_enid,
     staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
 
   const getMyMeetingsQuery = useQuery({
@@ -33,8 +31,6 @@ const useConference = () => {
     },
     enabled: !!authDetails,
     staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
   });
   const getMeetingByIdQuery = (id) => {
     return useQuery({

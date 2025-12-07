@@ -82,7 +82,7 @@ export default function DashboardLayout() {
             animate={{ x: 0 }}
             exit={{ x: "-100%" }}
             transition={{ type: "spring", stiffness: 200, damping: 25 }}
-            className="fixed inset-y-0 left-0 bg-oliveDark/95 z-50 p-4 md:hidden "
+            className="fixed inset-y-0 left-0 bg-oliveDark/95 z-50 p-4 md:hidden h-full flex flex-col shadow-lg shadow-black/40"
           >
             <div className="flex justify-between items-center mt-8 mb-2">
               <h2 className="text-lg font-semibold"></h2>
@@ -93,7 +93,9 @@ export default function DashboardLayout() {
                 Close
               </button>
             </div>
-            <ChatList />
+            <div className="flex-1 h-full overflow-y-auto">
+              <ChatList />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

@@ -8,7 +8,7 @@ import { useLocation, useOutletContext } from "react-router-dom";
 export default function ChatHeader() {
   const { typingUsers } = useContext(ChatContext);
   const location = useLocation();
-  const { setShowRightPanel } = useOutletContext(); // ✅ Get it here
+  const { setShowRightPanel } = useOutletContext();
   const chatUserData = location?.state;
 
   return (

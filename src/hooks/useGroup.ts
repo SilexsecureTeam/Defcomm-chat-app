@@ -27,8 +27,6 @@ const useGroups = () => {
       },
       enabled: !!authDetails, // Fetch only when authenticated
       staleTime: 0, // Forces refetching every time you visit the page
-      refetchOnMount: true, // Refetch when component mounts
-      refetchOnWindowFocus: true, // Refetch when the page is focused
     });
 
   // Fetch [pending] groups
@@ -41,8 +39,6 @@ const useGroups = () => {
       },
       enabled: !!authDetails, // Fetch only when authenticated
       staleTime: 0, // Forces refetching every time you visit the page
-      refetchOnMount: true, // Refetch when component mounts
-      refetchOnWindowFocus: true, // Refetch when the page is focused
     });
 
   // Fetch members of a specific group

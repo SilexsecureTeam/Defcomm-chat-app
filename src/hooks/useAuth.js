@@ -7,11 +7,13 @@ import { onFailure } from "../utils/notifications/OnFailure";
 import { onSuccess } from "../utils/notifications/OnSuccess";
 import { queryClient } from "../services/query-client";
 import { extractErrorMessage } from "../utils/formmaters";
+import { useAppStore } from "../context/StoreContext";
 
 const useAuth = () => {
   const navigate = useNavigate();
   const { authDetails, updateAuth } = useContext(AuthContext);
   const client = axiosClient(authDetails?.access_token);
+  const { clear: clearAppStore } = useAppStore();
 
   // 🔄 Query: Get Profile Data
   const profileQuery = useQuery({
@@ -90,7 +92,7 @@ const useAuth = () => {
     onSuccess: (data) => {
       onSuccess({
         message: "OTP Requested!",
-        success: `Here is the otp- ${data?.otp}`,
+        success: "Check your email for the verification code.", //`Here is the otp- ${data?.otp}`,
       });
     },
     onError: (err) => {
@@ -139,12 +141,16 @@ const useAuth = () => {
       const payload = mode === "all" ? {} : { device: authDetails?.device_id };
       await client.post("/auth/logout", payload);
     },
-    onSuccess: (_, variables) => {
+    onSuccess: async () => {
       // Clear auth state
       updateAuth(null);
 
       // Selectively clear cache (safer than full clear)
       queryClient.removeQueries();
+
+      if (typeof clearAppStore === "function") {
+        await clearAppStore();
+      }
 
       // Redirect
       navigate("/login", {

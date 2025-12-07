@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect, useContext } from "react";
+import React, { useRef, useContext } from "react";
 import { FaSpinner } from "react-icons/fa6";
 import { ChatContext } from "../../../context/ChatContext";
 import useChat from "../../../hooks/useChat";
 import { motion } from "framer-motion";
 import SendMessage from "../SendMessage";
 import ChatMessageList from "../ChatMessageList";
+import { useAutoScroll } from "../../../utils/chat/useAutoScroll";
 
 const ChatInterface = () => {
   const { typingUsers, selectedChatUser } = useContext(ChatContext);
@@ -23,25 +24,25 @@ const ChatInterface = () => {
   const messages = data?.pages.flatMap((page) => page.data) ?? [];
   const chatMeta = data?.pages?.[0]?.chat_meta;
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView();
-  }, [typingUsers[Number(selectedChatUser?.contact_id)]]);
+  useAutoScroll({
+    messages,
+    containerRef: messageRef,
+    endRef: messagesEndRef,
+    typing: Boolean(typingUsers[selectedChatUser?.contact_id]),
+    pauseAutoScroll: isFetchingNextPage,
+  });
 
   return (
-    <div className="relative gap-4 h-full flex flex-col">
+    <div className="relative h-full flex flex-col">
       <div
         ref={messageRef}
-        className="flex-1 w-full overflow-y-auto flex flex-col p-4 pb-14"
+        className="flex-1 w-full overflow-y-auto flex flex-col p-4"
       >
         {selectedChatUser ? (
           isLoading ? (
             <div className="h-20 flex justify-center items-center text-oliveGreen gap-2">
               <FaSpinner className="animate-spin text-2xl" /> Loading Messages
             </div>
-          ) : error ? (
-            <p className="text-red-500 text-center">
-              Failed to load messages. Please try again.
-            </p>
           ) : (
             <>
               <ChatMessageList
@@ -59,7 +60,7 @@ const ChatInterface = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex items-start space-x-1"
+                  className="flex items-start space-x-1 ml-5 mt-3"
                 >
                   <div className="p-2 rounded-lg bg-white text-black shadow-md flex items-center space-x-1 max-w-40">
                     <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />

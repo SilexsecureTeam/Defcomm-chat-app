@@ -23,7 +23,7 @@ export function useAutoScroll({
   useEffect(() => {
     if (initialLoad.current && messages?.length > 0) {
       requestAnimationFrame(() => {
-        endRef.current?.scrollIntoView({ behavior: "auto" });
+        endRef?.current?.scrollIntoView({ behavior: "auto" });
       });
       initialLoad.current = false;
     }
@@ -32,7 +32,7 @@ export function useAutoScroll({
   // Scroll when new messages arrive (if user is near bottom)
   useEffect(() => {
     if (pauseAutoScroll) return; // 👈 don't scroll when fetching older messages
-    const container = containerRef.current;
+    const container = containerRef?.current;
     if (!container || !messages?.length) return;
 
     const isNearBottom =

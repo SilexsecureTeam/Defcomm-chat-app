@@ -1,6 +1,7 @@
 import { toast } from "react-toastify";
 
 import DOMPurify from "dompurify";
+import { DatabaseIcon } from "lucide-react";
 
 export const parseHtml = (inputString) => {
   if (typeof inputString !== "string") return "";
@@ -150,4 +151,47 @@ export const formatDateTimeForBackend = (datetimeLocal) => {
 
   // Final string for backend
   return `${year}-${month}-${day} ${hours}:${minutes}:00`;
+};
+
+export const formatUtcToLocal = (utcString) => {
+  if (!utcString) return "";
+  const date = new Date(utcString + " UTC");
+  return date.toLocaleString(undefined, {
+    weekday: "short",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+export function formatDateTimeForInput(datetime) {
+  if (!datetime) return "";
+
+  // Parse the date string as UTC always
+  const utcDate = new Date(datetime);
+
+  // Convert from UTC to Africa/Lagos (+01:00)
+  const localDate = new Date(utcDate.getTime() + 60 * 60 * 1000);
+
+  // Format properly for <input type="datetime-local">
+  const year = localDate.getFullYear();
+  const month = String(localDate.getMonth() + 1).padStart(2, "0");
+  const day = String(localDate.getDate()).padStart(2, "0");
+  const hours = String(localDate.getHours()).padStart(2, "0");
+  const minutes = String(localDate.getMinutes()).padStart(2, "0");
+
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
+
+export const loadingMessages = [
+  "Preparing secure connection...",
+  "Generating meeting access token...",
+  "Setting up your conference environment...",
+  "Almost ready — please hold on...",
+];
+
+export const normalizeId = (obj) => {
+  return isNaN(obj?.id) ? obj?.id : obj?.id_en;
 };

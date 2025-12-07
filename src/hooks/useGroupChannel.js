@@ -120,12 +120,12 @@ const useGroupChannels = ({ groups, token }) => {
         });
       };
 
-      // Bind with named handlers
+      // ✅ Bind with named handlers
       channel.bind("pusher:subscription_succeeded", handleSubSuccess);
       channel.bind("pusher:subscription_error", handleSubError);
       channel.bind("group.message.sent", handleMessage);
 
-      // Cleanup for this group
+      // ✅ Cleanup for this group
       return () => {
         channel.unbind("pusher:subscription_succeeded", handleSubSuccess);
         channel.unbind("pusher:subscription_error", handleSubError);
@@ -152,7 +152,9 @@ const useGroupChannels = ({ groups, token }) => {
   return () => {
     try {
       pusherRef.current?.disconnect();
-    } catch (e) {}
+    } catch (e) {
+      console.warn("Cleanup error:", e);
+    }
   };
 };
 

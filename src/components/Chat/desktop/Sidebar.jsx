@@ -3,16 +3,20 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { BiSolidMessageSquareDetail } from "react-icons/bi";
 import { RiGroup3Line } from "react-icons/ri";
 import { AiOutlineVideoCamera } from "react-icons/ai";
-import { IoCallOutline, IoSettingsOutline } from "react-icons/io5";
+import {
+  IoCallOutline,
+  IoLogOutOutline,
+  IoSettingsOutline,
+} from "react-icons/io5";
 import { useContext, useState, useEffect } from "react";
 import { ChatContext } from "../../../context/ChatContext";
 import { FaWalkieTalkie } from "react-icons/fa6";
-
+import useAuth from "../../../hooks/useAuth";
 export default function Sidebar({ onMessageClick, showChatList }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [active, setActive] = useState("msg");
-
+  const { logout } = useAuth();
   const {
     setShowSettings,
     setShowCall,
@@ -22,7 +26,8 @@ export default function Sidebar({ onMessageClick, showChatList }) {
     selectedChatUser,
   } = useContext(ChatContext);
 
-  // detect active chat route (e.g., /dashboard/chat/:id)
+  console.log(selectedChatUser);
+
   const onChatPage =
     location.pathname === "/dashboard" || location.pathname.includes("/chat");
 
@@ -88,12 +93,12 @@ export default function Sidebar({ onMessageClick, showChatList }) {
     {
       id: "video",
       icon: <AiOutlineVideoCamera size={20} />,
-      disabled: !selectedChatUser,
+      disabled: selectedChatUser?.type !== "user",
     },
     {
       id: "call",
       icon: <IoCallOutline size={20} />,
-      disabled: !selectedChatUser,
+      disabled: selectedChatUser?.type !== "user",
     },
     { id: "walkie", icon: <FaWalkieTalkie size={20} /> },
     { id: "settings", icon: <IoSettingsOutline size={20} /> },
@@ -124,6 +129,14 @@ export default function Sidebar({ onMessageClick, showChatList }) {
             </p>
           );
         })}
+      </div>
+      <div className="pb-4">
+        <button
+          onClick={() => logout()}
+          className="p-2 rounded-lg text-white hover:bg-white hover:text-olive transition-all"
+        >
+          <IoLogOutOutline size={22} />
+        </button>
       </div>
     </div>
   );

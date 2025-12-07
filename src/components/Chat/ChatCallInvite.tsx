@@ -41,7 +41,7 @@ function ChatCallInvite({
   onAcceptCall,
   caller,
 }: ChatCallInviteProps) {
-  const { callMessage } = useContext(ChatContext);
+  const { callMessage, finalCallData } = useContext(ChatContext);
 
   const msgIdEn = msg?.id ?? null;
   const msgMeetingId = useMemo(
@@ -73,10 +73,19 @@ function ChatCallInvite({
       return "miss";
     }
 
-    if (callMsgMatches) return callMessage.status || "ringing";
+    if (callMsgMatches) {
+      // If the call was picked on another device
+      if (
+        finalCallData?.id === callMessage?.id &&
+        finalCallData?.state === "pick"
+      ) {
+        return "picked_elsewhere";
+      }
+      return callMessage.status || "ringing";
+    }
 
     return msg?.call_state || "miss";
-  }, [callMessage, callMsgMatches, msg]);
+  }, [callMessage, callMsgMatches, msg, finalCallData]);
 
   // Duration display
   const callDuration = useMemo(() => {
@@ -103,6 +112,10 @@ function ChatCallInvite({
   }, [inferredState, callMessage, callMsgMatches, isMyChat]);
 
   const getMessageText = () => {
+    if (inferredState === "picked_elsewhere")
+      return isMyChat
+        ? `${caller || "They"} picked the call on another device`
+        : "Call picked on another device";
     if (
       callMsgMatches &&
       (callMessage?.status === "on" || inferredState === "on")
@@ -112,13 +125,11 @@ function ChatCallInvite({
         : `${caller || "They"} is in the call`;
     }
     if (inferredState === "miss")
-      return isMyChat
-        ? `${msg.user_to_name || "They"} missed your call`
-        : "You missed the call";
+      return isMyChat ? "They missed your call" : "You missed the call";
     if (inferredState === "pick")
       return isMyChat
-        ? `${msg.user_to_name || "They"} picked the call`
-        : "You picked the call";
+        ? "You picked the call"
+        : `${caller || "They"} picked the call`;
     if (inferredState === "ringing")
       return isMyChat
         ? "You are calling..."
@@ -127,6 +138,7 @@ function ChatCallInvite({
   };
 
   const getStatusText = () => {
+    if (inferredState === "picked_elsewhere") return "Picked on another device";
     if (
       callMsgMatches &&
       (callMessage?.status === "on" || inferredState === "on")
@@ -194,7 +206,8 @@ function ChatCallInvite({
         !(callMsgMatches && callMessage?.status === "on") && (
           <button
             onClick={onAcceptCall}
-            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm"
+            className="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled={inferredState === "picked_elsewhere"} // disable button
           >
             {isMyChat ? "Join" : "Accept"}
           </button>

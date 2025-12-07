@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import { MeetingContext } from "../../context/MeetingContext";
 import CallComponentContent from "./call/CallComponentContent";
-import ConferenceRoom from "../../pages/ConferenceRoom";
 
 type Props = {
   initialMeetingId?: string;
@@ -26,12 +25,15 @@ const CallComponent = ({ initialMeetingId, setInitialMeetingId }: Props) => {
       setInitialMeetingId(null);
     }
   }, [meetingId]);
-  
+
   return (
-    <CallComponentContent meetingId={meetingId} setMeetingId={(id) => {
+    <CallComponentContent
+      meetingId={meetingId}
+      setMeetingId={(id) => {
         setMeetingId(id);
         if (setInitialMeetingId) setInitialMeetingId(id);
-      }} />
+      }}
+    />
   );
 };
 export default CallComponent;

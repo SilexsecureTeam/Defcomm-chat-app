@@ -7,6 +7,7 @@ import { onFailure } from "../utils/notifications/OnFailure";
 import { extractErrorMessage } from "../utils/formmaters";
 import audioController from "../utils/audioController";
 import messageSound from "../assets/audio/message.mp3";
+import startRecordSound from "../assets/audio/radio-button.mp3";
 import { onPrompt } from "../utils/notifications/onPrompt";
 import { onSuccess } from "../utils/notifications/OnSuccess";
 
@@ -23,13 +24,19 @@ export default function useConferenceParticipants() {
     setIsScreenSharing,
     setShowConference,
     providerMeetingId,
+    isCreator,
   } = useContext(MeetingContext);
 
   const [recordingStartedAt, setRecordingStartedAt] = useState(null);
+  const [activeSpeakerId, setActiveSpeakerId] = useState(null);
   const [recordingTimer, setRecordingTimer] = useState("00:00");
-
+  const [connectionState, setConnectionState] = useState("CONNECTING");
   const joinedParticipantsRef = useRef(new Set());
   const removedParticipantsRef = useRef(new Set());
+  const leftParticipantsRef = useRef(new Set());
+  const [pendingRequests, setPendingRequests] = useState([]);
+
+  const recordingStateHandledRef = useRef(null);
 
   const {
     participants,
@@ -41,6 +48,7 @@ export default function useConferenceParticipants() {
     startRecording,
     stopRecording,
     recordingState,
+    onSpeakerChanged,
   } = useMeeting({
     onMeetingLeft: () => {
       setConference(null);
@@ -56,15 +64,18 @@ export default function useConferenceParticipants() {
       if (!joinedParticipantsRef.current.has(id)) {
         joinedParticipantsRef.current.add(id);
         audioController.playRingtone(messageSound);
-        onPrompt({
-          title: "Participant joined!",
-          message: `${
-            participant?.displayName || "A participant"
-          } is now in the meeting`,
-        });
+        // onPrompt({
+        //   title: "Participant joined!",
+        //   message: `${
+        //     participant?.displayName || "A participant"
+        //   } is now in the meeting`,
+        // });
       }
     },
     onParticipantLeft: (participant) => {
+      if (leftParticipantsRef.current.has(participant.id)) return; // ignore duplicates
+      leftParticipantsRef.current.add(participant.id);
+
       if (removedParticipantsRef.current.has(participant.id)) {
         onPrompt({
           title: "Participant Removed!",
@@ -104,15 +115,23 @@ export default function useConferenceParticipants() {
       audioController.playRingtone(messageSound);
       setIsScreenSharing(true);
     },
+    onSpeakerChanged: (speakerId) => {
+      if (speakerId) {
+        setActiveSpeakerId(speakerId);
+      }
+    },
     onRecordingStateChanged: ({ status }) => {
+      if (recordingStateHandledRef.current === status) return; // ignore duplicates
+      recordingStateHandledRef.current = status;
+
       if (status === Constants.recordingEvents.RECORDING_STARTING) {
         onPrompt({
           title: "Recording Starting",
           message: "The recording process is initializing",
         });
       } else if (status === Constants.recordingEvents.RECORDING_STARTED) {
+        audioController.playRingtone(startRecordSound);
         setRecordingStartedAt(Date.now());
-
         onSuccess({
           message: "Recording Started",
           success: "The meeting is now being recorded",
@@ -123,13 +142,60 @@ export default function useConferenceParticipants() {
           message: "The recording process is ending",
         });
       } else if (status === Constants.recordingEvents.RECORDING_STOPPED) {
+        audioController.playRingtone(startRecordSound);
         setRecordingStartedAt(null);
         setRecordingTimer("00:00");
-
         onSuccess({
           message: "Recording Stopped",
           success: "The meeting recording has ended",
         });
+      }
+
+      // reset after 1s so state changes are captured again
+      setTimeout(() => {
+        recordingStateHandledRef.current = null;
+      }, 1000);
+    },
+    onEntryRequested: ({ participantId, name, deny, allow }) => {
+      setPendingRequests((prev) => {
+        // prevent duplicates if the same participant requests multiple times
+        const exists = prev.some((req) => req.id === participantId);
+        if (exists) return prev;
+        audioController.playRingtone(messageSound);
+
+        return [...prev, { id: participantId, name, allow, deny }];
+      });
+    },
+
+    onEntryResponded: (participantId, decision) => {
+      const isSelf = String(participantId) === String(authDetails?.user?.id);
+
+      // Host side: just update pending list, no notifications
+      if (isCreator) {
+        setPendingRequests((prev) =>
+          prev.filter((r) => r.id !== participantId)
+        );
+        return;
+      }
+      if (isSelf) {
+        if (decision === "allowed") {
+          onSuccess({
+            message: "Access Granted",
+            success: "Host has admitted you into the meeting.",
+          });
+          setPendingRequests((prev) =>
+            prev.filter((r) => r.id !== participantId)
+          );
+        } else {
+          onFailure({
+            message: "Access Denied",
+            error: "Host denied your request to join.",
+          });
+          leave();
+          setPendingRequests((prev) =>
+            prev.filter((r) => r.id !== participantId)
+          );
+        }
       }
     },
     onError: (error) => {
@@ -153,10 +219,22 @@ export default function useConferenceParticipants() {
 
   const remoteParticipants = useMemo(() => {
     if (!participants) return [];
-    return [...participants.values()].filter(
-      (p) => String(p.id) !== String(authDetails?.user?.id)
-    );
-  }, [participants, authDetails?.user?.id]);
+
+    const userId = String(authDetails?.user?.id);
+
+    return [...participants.values()]
+      .filter((p) => String(p.id) !== userId)
+      .sort((a, b) => {
+        // Presenter first
+        if (a.id === presenterId) return -1;
+        if (b.id === presenterId) return 1;
+        // Active speaker next
+        if (a.id === activeSpeakerId) return -1;
+        if (b.id === activeSpeakerId) return 1;
+        // Then alphabetical (optional fallback)
+        return (a.displayName || "").localeCompare(b.displayName || "");
+      });
+  }, [participants, authDetails?.user?.id, presenterId, activeSpeakerId]);
 
   useEffect(() => {
     if (participants && conference) {
@@ -200,5 +278,8 @@ export default function useConferenceParticipants() {
     setRecordingStartedAt,
     joinedParticipantsRef,
     removedParticipantsRef,
+    activeSpeakerId,
+    connectionState,
+    pendingRequests,
   };
 }

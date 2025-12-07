@@ -10,7 +10,6 @@ import { useAppStore } from "./StoreContext";
 export const ChatContext = createContext();
 
 export const ChatProvider = ({ children }) => {
-  const { get } = useAppStore();
   const [message, setMessage] = useState("");
   const [file, setFile] = useState(null);
   const [callType, setCallType] = useState("audio"); // Default call type
@@ -27,10 +26,35 @@ export const ChatProvider = ({ children }) => {
 
   const [finalCallData, setFinalCallData] = useState(null);
 
+  const [isInitiator, setIsInitiator] = useState(false);
+
   const [modalTitle, setModalTitle] = useState("Defcomm");
   const [members, setMembers] = useState();
   const initialShowToggleSwitch =
     JSON.parse(sessionStorage.getItem("showToggleSwitch")) ?? true;
+
+  const { get } = useAppStore();
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadSelected = async () => {
+      try {
+        const value = await get("selectedChatUser");
+        if (mounted) {
+          setSelectedChatUser(value ?? null);
+        }
+      } catch (err) {
+        console.error("Error loading selectedChatUser:", err);
+      }
+    };
+
+    loadSelected();
+
+    return () => {
+      mounted = false;
+    };
+  }, [get]);
 
   const [showToggleSwitch, setShowToggleSwitch] = useState(
     initialShowToggleSwitch
@@ -53,15 +77,6 @@ export const ChatProvider = ({ children }) => {
     messageRefsRef.current = refs;
   }, []);
 
-  useEffect(() => {
-    const init = async () => {
-      const storedChat = await get("selectedChatUser");
-      if (storedChat) {
-        setSelectedChatUser(storedChat);
-      }
-    };
-    init();
-  }, []);
   // scroll helper: accepts the same stable key you use for refs: client_id ?? id_en ?? id_en
   const scrollToMessage = useCallback(async (key, opts = {}) => {
     const {
@@ -245,6 +260,8 @@ export const ChatProvider = ({ children }) => {
         setSettings,
         finalCallData,
         setFinalCallData,
+        isInitiator,
+        setIsInitiator,
       }}
     >
       {children}

@@ -9,12 +9,12 @@ import { onFailure } from "../../../utils/notifications/OnFailure";
 import { onPrompt } from "../../../utils/notifications/onPrompt";
 import { onSuccess } from "../../../utils/notifications/OnSuccess";
 import audioController from "../../../utils/audioController";
+//@ts-ignore
 import callerTone from "../../../assets/audio/caller.mp3";
 import ParticipantMedia from "./ParticipantMedia";
 import CallSetupPanel from "./CallSetupPanel";
 import { formatCallDuration } from "../../../utils/formmaters";
 import useChat from "../../../hooks/useChat";
-import { useQueryClient } from "@tanstack/react-query";
 
 const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
   const { authDetails } = useContext<any>(AuthContext);
@@ -24,14 +24,17 @@ const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
     callDuration,
     setCallDuration,
     setModalTitle,
+    isInitiator,
+    setIsInitiator,
+    setShowCall,
   } = useContext(ChatContext);
-  const { setProviderMeetingId } = useContext(MeetingContext);
+  const { setProviderMeetingId, isTokenLoading, setIsCall } =
+    useContext(MeetingContext);
   const { updateCallLog } = useChat();
   const [isMeetingActive, setIsMeetingActive] = useState(false);
   const [isRinging, setIsRinging] = useState(true);
   const [other, setOther] = useState<any | null>(null);
   const [me, setMe] = useState<any | null>(null);
-  const [isInitiator, setIsInitiator] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
 
   const callTimer = useRef<NodeJS.Timeout | null>(null);
@@ -55,7 +58,7 @@ const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
     },
     onParticipantJoined: () => {
       setIsRinging(false);
-      setCallMessage((prev) => ({ ...prev, status: "on" }));
+      setCallMessage((prev: any) => ({ ...prev, status: "on" }));
       audioController.stopRingtone();
 
       if (ringTimeoutRef.current) {
@@ -85,8 +88,6 @@ const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
 
   const handleLeave = async (reason: string) => {
     if (callTimer.current) clearInterval(callTimer.current);
-
-    console.log(callMessage, callDuration, callLogUpdatedRef.current);
 
     const isMissed = !callStartRef.current; // truly missed if never connected
 
@@ -125,17 +126,20 @@ const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
     } catch (e) {
       console.warn("leave() threw:", e);
     }
+
     setIsMeetingActive(false);
-    setMeetingId(null);
     audioController.stopRingtone();
-    setCallMessage(null);
-    setProviderMeetingId(null);
+    setShowCall(false);
     setShowSummary(true);
+    setCallMessage(null);
+    setMeetingId(null);
+    setProviderMeetingId(null);
+    setIsCall(false);
   };
 
   useEffect(() => {
     // Auto-leave after 10s if I initiated the call, it's still ringing, and no one has joined yet.
-    if (isInitiator && isRinging && !callStartRef.current) {
+    if (callMessage && isInitiator && isRinging && !callStartRef.current) {
       ringTimeoutRef.current = setTimeout(() => {
         console.warn("Auto-leaving call due to no response after 10s");
         handleLeave("auto"); // this will mark as missed
@@ -176,6 +180,7 @@ const CallComponentContent = ({ meetingId, setMeetingId }: any) => {
             showSummary={showSummary}
             callDuration={callDuration}
             isInitiator={isInitiator}
+            isTokenLoading={isTokenLoading}
             setIsInitiator={setIsInitiator}
           />
         ) : (

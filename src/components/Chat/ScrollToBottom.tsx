@@ -55,7 +55,7 @@ export default function ScrollToBottomButton({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 18 }}
           transition={{ duration: 0.18 }}
-          className="absolute right-4 bottom-24 z-50"
+          className="absolute right-4 -top-14 z-50"
         >
           <div className="flex items-center gap-2">
             {unreadCount > 0 && (

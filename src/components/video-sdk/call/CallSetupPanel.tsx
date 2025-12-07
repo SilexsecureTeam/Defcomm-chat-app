@@ -25,14 +25,15 @@ const CallSetupPanel = ({
   join,
   showSummary = false,
   setShowSummary = () => {},
-  isInitiator = false,
+  isInitiator,
   setIsInitiator,
+  isTokenLoading,
 }: any) => {
   const { callMessage, setModalTitle, finalCallData, setFinalCallData } =
     useContext(ChatContext);
   const { updateCallLog } = useChat();
   const { authDetails } = useContext<any>(AuthContext);
-  const { setProviderMeetingId } = useContext(MeetingContext);
+  const { setProviderMeetingId, setIsCall } = useContext(MeetingContext);
   const [isCreatingMeeting, setIsCreatingMeeting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
@@ -46,15 +47,21 @@ const CallSetupPanel = ({
     setIsCreatingMeeting(true);
     try {
       const newMeetingId = await createMeeting();
-      setProviderMeetingId(newMeetingId);
-      setMeetingId(newMeetingId);
-      setIsInitiator(true);
-      setShowSummary(false);
-      setFinalCallData(null);
-      setCallDuration(0);
-      setModalTitle("Call Setup");
+      if (newMeetingId) {
+        setIsInitiator(true);
+        setProviderMeetingId(newMeetingId);
+        setIsCall(true);
+        setMeetingId(newMeetingId);
+        setShowSummary(false);
+        setFinalCallData(null);
+        setCallDuration(0);
+        setModalTitle("Call Setup");
+      }
     } catch (error) {
-      onFailure({ message: "Meeting Creation Failed", error: error.message });
+      onFailure({
+        message: "Meeting Creation Failed",
+        error: extractErrorMessage(error),
+      });
     } finally {
       setIsCreatingMeeting(false);
     }
@@ -88,7 +95,7 @@ const CallSetupPanel = ({
         return; // Don't proceed if sending failed
       }
       setModalTitle("Call in Progress");
-      join(); // Proceed only if message was actually sent
+      await join(); // Proceed only if message was actually sent
     } catch (error: any) {
       onFailure({
         message: "Meeting Join Failed",
@@ -112,16 +119,24 @@ const CallSetupPanel = ({
     }
     setIsLoading(true);
     try {
-      await updateCallLog.mutateAsync({
-        mss_id: callMessage?.id,
-        duration: formatCallDuration(callDuration),
-        call_state: "pick",
-      } as any);
-
-      join();
-      audioController.stopRingtone();
+      await updateCallLog.mutateAsync(
+        {
+          mss_id: callMessage?.id,
+          duration: formatCallDuration(callDuration),
+          call_state: "pick",
+        } as any,
+        {
+          onSuccess: () => {
+            join();
+            audioController.stopRingtone();
+          },
+        }
+      );
     } catch (error) {
-      onFailure({ message: "Call Log Update Failed", error: error.message });
+      onFailure({
+        message: "Call Log Update Failed",
+        error: extractErrorMessage(error),
+      });
     } finally {
       setIsLoading(false);
     }
@@ -142,23 +157,29 @@ const CallSetupPanel = ({
       {!meetingId || showSummary ? (
         <button
           onClick={handleCreateMeeting}
-          disabled={isCreatingMeeting}
+          disabled={isCreatingMeeting || isTokenLoading}
           className="bg-oliveLight hover:bg-oliveDark text-white p-2 rounded-full mt-4 min-w-40 font-bold flex items-center justify-center gap-2"
         >
           Initiate Call{" "}
-          {isCreatingMeeting && <FaSpinner className="animate-spin" />}
+          {(isCreatingMeeting || isTokenLoading) && (
+            <FaSpinner className="animate-spin" />
+          )}
         </button>
       ) : isInitiator ? (
         <button
+          disabled={isLoading || isTokenLoading}
           onClick={handleStartCall}
-          className="bg-green-600 text-white p-2 rounded-full mt-4 min-w-40 font-bold flex items-center justify-center gap-2"
+          className="bg-green-600 text-white p-2 rounded-full mt-4 min-w-40 font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
         >
-          Start Call {isLoading && <FaSpinner className="animate-spin" />}
+          Start Call{" "}
+          {(isLoading || isTokenLoading) && (
+            <FaSpinner className="animate-spin" />
+          )}
         </button>
       ) : (
         <button
           onClick={handleJoinMeeting}
-          className="bg-green-600 text-white p-2 rounded-full mt-4 min-w-40 font-bold flex items-center justify-center gap-2"
+          className="bg-green-600 text-white p-2 rounded-full mt-4 min-w-40 font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-wait"
         >
           Join Call {isLoading && <FaSpinner className="animate-spin" />}
         </button>

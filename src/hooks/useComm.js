@@ -15,45 +15,48 @@ const useComm = () => {
   const queryClient = useQueryClient();
 
   // Fetch Walkie-Talkie Channels
-  const getChannelList = useQuery({
-    queryKey: ["channelList"],
-    queryFn: async () => {
-      const { data } = await client.get("/walkietalkie/channecreatellist");
-      return data?.data || [];
-    },
-    enabled: !!authDetails?.user_enid,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+  const getChannelList = () =>
+    useQuery({
+      queryKey: ["channelList"],
+      queryFn: async () => {
+        const { data } = await client.get("/walkietalkie/channecreatellist");
+        return data?.data || [];
+      },
+      enabled: !!authDetails?.user_enid,
+      staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    });
 
-  const getInvitedChannelList = useQuery({
-    queryKey: ["channelList Active"],
-    queryFn: async () => {
-      const { data } = await client.get(
-        "/walkietalkie/channellistinvited/active"
-      );
-      return data?.data || [];
-    },
-    enabled: !!authDetails?.user_enid,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+  const getInvitedChannelList = () =>
+    useQuery({
+      queryKey: ["channelList Active"],
+      queryFn: async () => {
+        const { data } = await client.get(
+          "/walkietalkie/channellistinvited/active"
+        );
+        return data?.data || [];
+      },
+      enabled: !!authDetails?.user_enid,
+      staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    });
 
-  const getInvitedChannelPending = useQuery({
-    queryKey: ["channelList Invited Pending"],
-    queryFn: async () => {
-      const { data } = await client.get(
-        "/walkietalkie/channellistinvited/pending"
-      );
-      return data?.data || [];
-    },
-    enabled: !!authDetails?.user_enid,
-    staleTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+  const getInvitedChannelPending = () =>
+    useQuery({
+      queryKey: ["channelList Invited Pending"],
+      queryFn: async () => {
+        const { data } = await client.get(
+          "/walkietalkie/channellistinvited/pending"
+        );
+        return data?.data || [];
+      },
+      enabled: !!authDetails?.user_enid,
+      staleTime: 0,
+      refetchOnMount: true,
+      refetchOnWindowFocus: true,
+    });
 
   // ➕ Create New Comm Channel
   const createChannelMutation = useMutation({
