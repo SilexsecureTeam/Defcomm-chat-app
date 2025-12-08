@@ -108,7 +108,7 @@ jobs:
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
 
-      - name: Debug: confirm signing key file (tags only)
+      - name: Debug confirm signing key file (tags only)
         if: ${{ github.ref_type == 'tag' }}
         shell: bash
         run: |
