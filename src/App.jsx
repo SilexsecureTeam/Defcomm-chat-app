@@ -1,4 +1,4 @@
-import { Suspense, lazy, useContext } from "react";
+import { Suspense, lazy, useEffect, useContext } from "react";
 import {
   HashRouter as Router,
   Routes,
@@ -20,6 +20,10 @@ import { StoreProvider } from "./context/StoreContext";
 import TitleBar from "./layout/TitleBar";
 import NetworkStatusBanner from "./components/NetworkStatusBanner";
 import RootRedirect from "./routes/RootRedirect";
+import { isTauri } from "@tauri-apps/api/core";
+import * as tauriEvent from "@tauri-apps/api/event";
+import * as tauriUpdater from "@tauri-apps/plugin-updater";
+import { toast } from "react-toastify";
 
 // Lazy load components
 const DefcommLogin = lazy(() => import("./pages/DefcommLogin"));
@@ -27,6 +31,50 @@ const SecureRoute = lazy(() => import("./routes/SecureRoute"));
 const Dashboard = lazy(() => import("./routes/DashboardRoute"));
 
 const App = () => {
+  useEffect(() => {
+    const promise = tauriEvent.listen("longRunningThread", ({ payload }) => {
+      tauriLogger.info(payload.message);
+    });
+    return () => {
+      promise.then((unlisten) => unlisten());
+    };
+  }, []);
+
+  // update checker
+  useEffect(() => {
+    (async () => {
+      try {
+        const update = await tauriUpdater.check();
+        if (update) {
+          toast.info(
+            <div>
+              <strong>Update Available: v{update.version}</strong>
+              <p>{update.body}</p>
+              <button
+                onClick={() =>
+                  update.downloadAndInstall().then(() => {
+                    toast.success("Update installed, app will relaunch!");
+                  })
+                }
+                className="mt-2 px-3 py-1 bg-teal-600 text-white rounded"
+              >
+                Install & Relaunch
+              </button>
+            </div>,
+            {
+              autoClose: false,
+              closeOnClick: false,
+              draggable: true,
+            }
+          );
+        }
+      } catch (err) {
+        toast.error("Failed to check for updates.");
+        console.error(err);
+      }
+    })();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <StoreProvider>
