@@ -10,7 +10,7 @@ import EmptyState from "./EmptyState";
 function RecentCalls() {
   const navigate = useNavigate();
   const { getInvitedChannelPending, updateChannelInviteStatus } = useComm();
-  const { data, isLoading } = getInvitedChannelPending;
+  const { data, isLoading } = getInvitedChannelPending();
   const { isLoading: isMutating, variables } = updateChannelInviteStatus;
 
   // local per-item loading state with action type ('accept' | 'reject')

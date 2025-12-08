@@ -40,7 +40,7 @@ const Broadcast = () => {
     isLoading,
     isError,
     refetch,
-  } = getInvitedChannelList;
+  } = getInvitedChannelList();
 
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [selectedChannel, setSelectedChannel] = useState(null);
