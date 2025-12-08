@@ -223,3 +223,42 @@ jobs:
         run: |
           echo "Release created: ${{ steps.create_release.outputs.html_url }}"
           echo "You can find assets at: ${{ steps.create_release.outputs.html_url }}"
+
+      - name: Update latest.json in 'latest' release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # Get the path to latest.json in the bundles
+          LATEST_JSON=$(find all-bundles -type f -name latest.json | head -n1)
+          if [ -z "$LATEST_JSON" ]; then
+            echo "latest.json not found"
+            exit 1
+          fi
+
+          echo "Uploading latest.json from $LATEST_JSON to release 'latest'"
+
+          # Check if a release called 'latest' exists
+          RELEASE_ID=$(gh release view latest --json id -q ".id" 2>/dev/null || true)
+
+          if [ -z "$RELEASE_ID" ]; then
+            echo "Creating 'latest' release..."
+            gh release create latest "$LATEST_JSON" \
+              --title "Latest Release" \
+              --notes "This release contains only latest.json for Tauri auto-updates" \
+              --draft false \
+              --prerelease false
+          else
+            echo "'latest' release exists, updating latest.json..."
+            # Delete existing latest.json if it exists
+            ASSET_ID=$(gh release view latest --json assets -q ".assets[] | select(.name==\"latest.json\") | .id" || true)
+            if [ -n "$ASSET_ID" ]; then
+              gh release delete-asset "$ASSET_ID" --yes
+            fi
+            # Upload new latest.json
+            gh release upload latest "$LATEST_JSON" --clobber
+          fi
+
+          echo "latest.json is now available at:"
+          echo "https://github.com/${GITHUB_REPOSITORY}/releases/download/latest/latest.json"
