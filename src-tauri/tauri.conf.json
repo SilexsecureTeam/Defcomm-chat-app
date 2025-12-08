@@ -60,8 +60,8 @@
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDdBMzRFMUMyOUZCODY4NDkKUldSSmFMaWZ3dUUwZXQ4VDlWcjlDTWhDZkNIbmQrVWlFMlpqS3dzbFhKSDlocjlUSldOSzNqM1gK",
       "endpoints": [
-        "https://github.com/SilexsecureTeam/Defcomm-chat-app/tree/release/src-tauri/bundle/nsis",
-        "https://github.com/user/repo/releases/latest/download/latest.json"
+        "https://releases.myapp.com/{{target}}/{{arch}}/{{current_version}}",
+        "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/latest/download/latest.json"
       ],
       "dialog": true
     }
