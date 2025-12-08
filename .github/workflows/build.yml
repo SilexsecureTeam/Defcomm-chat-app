@@ -130,7 +130,7 @@ jobs:
           chmod 600 /tmp/tauri_signing.key
           echo "✅ Key saved to /tmp/tauri_signing.key"
 
-      - name: Debug: check key file (tags only, non-Windows)
+      - name: Debug check key file (tags only, non-Windows)
         if: ${{ github.ref_type == 'tag' && matrix.platform != 'windows-latest' }}
         run: |
           echo "Key file size (bytes): $(wc -c /tmp/tauri_signing.key | awk '{print $1}')"
