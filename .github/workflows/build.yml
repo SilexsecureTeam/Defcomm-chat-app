@@ -1,17 +1,25 @@
 name: Publish Release
+
 on:
   push:
     tags:
       - "v*"
-    branches: ["*"]
+    branches: "*"
   workflow_dispatch:
 
+# release creation requires write permission to repository contents
+permissions:
+  contents: write
+
 env:
-  APP_NAME: "Sample Desktop App"
+  APP_NAME: "Defcomm Desktop Chat App"
 
 jobs:
+  # Build changelog once
   changelog:
     runs-on: ubuntu-latest
+    outputs:
+      changelog: ${{ steps.build_changelog.outputs.changelog }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -19,33 +27,32 @@ jobs:
       - name: Build changelog
         id: build_changelog
         run: |
-          # NOTE: if commits subjects are standardized, you can filter the git log based on feat: and fix:
-          # and then replace "feat:" with "New: " and "fix:" with "Fixed "
-          # when AI gets good, we can also summarized commits into a bullet point list
           PREV_TAG=$(git tag --list v* | tail -n2 | head -n1)
           echo "changelog=$(git log $PREV_TAG...${{ github.ref_name }} --pretty=format:"- %s")" >> $GITHUB_OUTPUT
-    outputs:
-      changelog: ${{ steps.build_changelog.outputs.changelog }}
+  # Matrix build (macOS arm64, macOS x86_64, ubuntu, windows)
   release:
+    needs: [changelog]
+    runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: "macos-latest" # for Arm based macs (M1 and above).
-            args: "--target aarch64-apple-darwin"
-          - platform: "macos-latest" # for Intel based macs.
-            args: "--target x86_64-apple-darwin"
-          - platform: "ubuntu-latest"
-            args: ""
-          - platform: "windows-latest"
-            args: ""
-    runs-on: ${{ matrix.platform }}
-    needs: [changelog]
+          - platform: macos-latest
+            arch: aarch64
+            tauri_args: "--target aarch64-apple-darwin"
+          - platform: macos-latest
+            arch: x86_64
+            tauri_args: "--target x86_64-apple-darwin"
+          - platform: ubuntu-latest
+            arch: x86_64
+            tauri_args: ""
+          - platform: windows-latest
+            arch: x86_64
+            tauri_args: ""
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # build the changelog based on the commit messages between the versioned tags
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -53,16 +60,16 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        # NOTE: enterprise developers may hard code a version
         with:
           node-version: "lts/*"
           cache: pnpm
-          # node-version-file: '.nvmrc'
 
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
+      - name: Install frontend dependencies
+        run: pnpm install
+
+      - name: Install Rust stable (add mac targets where helpful)
+        uses: dtolnay/rust-toolchain@stable
         with:
-          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
@@ -70,65 +77,127 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      - name: Install Ubuntu dependencies
-        if: matrix.platform == 'ubuntu-latest'
-        run: |
-          sudo apt update
-          xargs sudo apt install -y < environment/apt_packages.txt
-
-      - name: Install frontend dependencies
-        run: |
-          pnpm install
-
-      - name: CI Build
+      # Build step for branches (CI quick build)
+      - name: CI Build (branches only)
         if: ${{ github.ref_type == 'branch' }}
-        run: |
-          pnpm rls
+        run: pnpm run build
 
-      - name: CI upload Windows
-        if: ${{ github.ref_type == 'branch' && matrix.platform == 'windows-latest' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Windows Installers"
-          path: |
-            src-tauri/release/bundle/msi/*.msi
-            src-tauri/release/bundle/nsis/*.exe
-
-      - name: CI upload macOS
-        if: ${{ github.ref_type == 'branch' && matrix.platform == 'macos-latest' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "macOS Installer"
-          path: |
-            src-tauri/release/bundle/dmg/*.dmg
-
-      - name: CI upload Linux
-        if: ${{ github.ref_type == 'branch' && matrix.platform == 'ubuntu-latest' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "Linux Distributions"
-          path: |
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/AppImage/*.AppImage
-
-      # TODO: https://tauri.app/v1/guides/building/linux#cross-compiling-tauri-applications-for-arm-based-devices
-      - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0
+      # ===== Decode base64 signing key to a file on each runner (tags only) =====
+      - name: Decode TAURI signing key to file (tags only)
         if: ${{ github.ref_type == 'tag' }}
-        # if u get Error: Resource not accessible by integration
-        # go to repository Settings => Action => General => Workflow permissions => Switch to Read and Write permisions
-        env:
-          CI: true
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_KEY="$RUNNER_TEMP/tauri_signing.key"
+          echo "Decoding TAURI signing key for RUNNER_OS=$RUNNER_OS -> $TMP_KEY"
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            # Use PowerShell to decode base64 into a binary file on Windows runners
+            powershell -NoProfile -Command "[IO.File]::WriteAllBytes('${TMP_KEY}', [Convert]::FromBase64String('${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}'))"
+          else
+            # macOS / Linux: decode base64 to file
+            echo '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' | base64 --decode > "$TMP_KEY"
+            chmod 600 "$TMP_KEY"
+          fi
+          # expose file path for later steps; tauri expects a path when signing
+          echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
+          # optionally expose password if supplied
+          if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" ]; then
+            echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
+          fi
+      - name: Debug confirm signing key file (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        shell: bash
+        run: |
+          if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && [ -f "${TAURI_SIGNING_PRIVATE_KEY}" ]; then
+            echo "✅ Signing key exists at: $TAURI_SIGNING_PRIVATE_KEY"
+            ls -l "$TAURI_SIGNING_PRIVATE_KEY" || true
+            echo "File size (bytes): $(wc -c < "$TAURI_SIGNING_PRIVATE_KEY")"
+          else
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY not found or file missing"
+            exit 1
+          fi
+      # ===== Build with tauri-action on tags (this produces bundle/, latest.json, and .sig when signing present) =====
+      - name: Build Tauri app (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        uses: tauri-apps/tauri-action@v0
         with:
-          # tauri-action replaces \_\_VERSION\_\_ with the app version
           tagName: ${{ github.ref_name }}
           releaseName: "${{ env.APP_NAME }} v__VERSION__"
           releaseBody: |
-            ${{needs.changelog.outputs.changelog}}
+            ${{ needs.changelog.outputs.changelog }}
             See the assets to download this version and install.
           releaseDraft: true
           prerelease: false
-          args: ${{ matrix.args }}
+          args: ${{ matrix.tauri_args }}
+        env:
+          CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # pass the path to the decoded key file (not the raw secret)
+          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+
+      - name: Show produced bundles (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        run: |
+          echo "Listing bundles created by Tauri (src-tauri/target/release/bundle):"
+          find src-tauri/target/release/bundle -maxdepth 5 -type f -print || true
+      # ===== upload produced bundles as workflow artifact (tags only) =====
+      - name: Upload platform bundles (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "bundles-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name }}"
+          path: |
+            src-tauri/target/release/bundle/**
+            src-tauri/target/release/bundle/*/**
+  # Publish job: collects artifacts from all matrix builds, creates a Release, uploads each file individually
+  publish:
+    needs: [release]
+    runs-on: ubuntu-latest
+    if: ${{ github.ref_type == 'tag' }}
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all-bundles
+
+      - name: List downloaded files
+        run: |
+          echo "==== downloaded files ===="
+          find all-bundles -type f -maxdepth 6 -print
+          echo "=========================="
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref_name }}
+          release_name: "${{ env.APP_NAME }} ${{ github.ref_name }}"
+          body: |
+            ${{ needs.changelog.outputs.changelog }}
+          draft: false
+          prerelease: false
+
+      - name: Upload each asset to the release individually
+        env:
+          UPLOAD_URL: ${{ steps.create_release.outputs.upload_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd all-bundles
+          # upload any file discovered
+          find . -type f -print0 | while IFS= read -r -d '' f; do
+            filename=$(basename "$f")
+            echo "Uploading $filename ..."
+            curl --fail -sS -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Content-Type: application/octet-stream" \
+              --data-binary @"$f" \
+              "${UPLOAD_URL}?name=${filename}"
+            echo "Uploaded: $filename"
+          done
+      - name: Show release assets URLs
+        run: |
+          echo "Release created: ${{ steps.create_release.outputs.html_url }}"
+          echo "You can find assets at: ${{ steps.create_release.outputs.html_url }}"
