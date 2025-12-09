@@ -4,7 +4,8 @@ on:
   push:
     tags:
       - "v*"
-    branches: "*"
+    branches:
+      - "*"
   workflow_dispatch:
 
 # release creation requires write permission to repository contents
@@ -147,6 +148,88 @@ jobs:
           # pass the path to the decoded key file (not the raw secret)
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # Add this environment variable for dynamic versioning
+          TAG_NAME: ${{ github.ref_name }}
+
+      # ===== CRITICAL: Process and rename updater artifacts =====
+      - name: Process and rename updater artifacts (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          VERSION="${TAG_NAME#v}"
+
+          echo "Processing artifacts for tag: $TAG_NAME, version: $VERSION"
+
+          # Go to bundle directory
+          cd src-tauri/target/release/bundle
+
+          # Generate proper updater JSON
+          cat > "Defcomm-updater-$TAG_NAME.json" << EOF
+          {
+            "version": "$VERSION",
+            "notes": "Release $TAG_NAME",
+            "pub_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "platforms": {
+              "darwin-aarch64": {
+                "signature": "$(cat macos/aarch64/*.sig 2>/dev/null | base64 -w 0 || echo '')",
+                "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_aarch64.app.tar.gz"
+              },
+              "darwin-x86_64": {
+                "signature": "$(cat macos/x64/*.sig 2>/dev/null | base64 -w 0 || echo '')",
+                "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_x64.app.tar.gz"
+              },
+              "linux-x86_64": {
+                "signature": "$(cat deb/*.sig 2>/dev/null | base64 -w 0 || echo '')",
+                "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_amd64.deb"
+              },
+              "windows-x86_64": {
+                "signature": "$(cat msi/*.sig 2>/dev/null | base64 -w 0 || echo '')",
+                "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_x64_en-US.msi"
+              }
+            }
+          }
+          EOF
+
+          # Also create latest.json for backward compatibility
+          cp "Defcomm-updater-$TAG_NAME.json" "latest.json"
+
+          # Rename macOS files
+          echo "Renaming macOS files..."
+          if [ -d "macos/aarch64" ]; then
+            for file in macos/aarch64/*.app.tar.gz; do
+              [ -e "$file" ] && mv "$file" "macos/aarch64/Defcomm_${VERSION}_aarch64.app.tar.gz" && echo "Renamed: $file"
+            done
+          fi
+
+          if [ -d "macos/x64" ]; then
+            for file in macos/x64/*.app.tar.gz; do
+              [ -e "$file" ] && mv "$file" "macos/x64/Defcomm_${VERSION}_x64.app.tar.gz" && echo "Renamed: $file"
+            done
+          fi
+
+          # Rename Linux files
+          echo "Renaming Linux files..."
+          if [ -d "deb" ]; then
+            for file in deb/*.deb; do
+              [ -e "$file" ] && mv "$file" "deb/Defcomm_${VERSION}_amd64.deb" && echo "Renamed: $file"
+            done
+          fi
+
+          if [ -d "appimage" ]; then
+            for file in appimage/*.AppImage; do
+              [ -e "$file" ] && mv "$file" "appimage/Defcomm_${VERSION}_amd64.AppImage" && echo "Renamed: $file"
+            done
+          fi
+
+          # Rename Windows files
+          echo "Renaming Windows files..."
+          if [ -d "msi" ]; then
+            for file in msi/*.msi; do
+              [ -e "$file" ] && mv "$file" "msi/Defcomm_${VERSION}_x64_en-US.msi" && echo "Renamed: $file"
+            done
+          fi
+
+          echo "Artifact processing complete!"
 
       - name: Show produced bundles (tags only)
         if: ${{ github.ref_type == 'tag' }}
@@ -178,6 +261,17 @@ jobs:
           echo "==== downloaded files ===="
           find all-bundles -type f -maxdepth 6 -print
           echo "=========================="
+
+      # ===== IMPORTANT: Create symlink for 'latest' =====
+      - name: Create latest.json symlink
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          # Find the first Defcomm-updater JSON file and copy it as latest.json
+          find all-bundles -name "Defcomm-updater-*.json" | head -1 | while read json_file; do
+            cp "$json_file" "all-bundles/latest.json"
+            echo "Created latest.json from: $json_file"
+          done
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -188,6 +282,15 @@ jobs:
           release_name: "${{ env.APP_NAME }} ${{ github.ref_name }}"
           body: |
             ${{ needs.changelog.outputs.changelog }}
+
+            ## Installation
+            Download the appropriate installer for your platform from the assets below.
+
+            ### Updater Configuration
+            The Tauri updater will automatically check for updates using:
+            ```
+            https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/${{ github.ref_name }}/Defcomm-updater-${{ github.ref_name }}.json
+            ```
           draft: false
           prerelease: false
 
@@ -200,8 +303,11 @@ jobs:
           cd all-bundles
           # upload any file discovered
           find . -type f -print0 | while IFS= read -r -d '' f; do
+            # Get relative path for better naming
+            rel_path="${f#./}"
+            # Use the file's actual name, don't rename
             filename=$(basename "$f")
-            echo "Uploading $filename ..."
+            echo "Uploading $rel_path as $filename ..."
             curl --fail -sS -X POST \
               -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Content-Type: application/octet-stream" \
@@ -213,3 +319,11 @@ jobs:
         run: |
           echo "Release created: ${{ steps.create_release.outputs.html_url }}"
           echo "You can find assets at: ${{ steps.create_release.outputs.html_url }}"
+          echo ""
+          echo "Updater JSON URL:"
+          echo "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/${{ github.ref_name }}/Defcomm-updater-${{ github.ref_name }}.json"
+          echo ""
+          echo "For the updater to work, make sure your tauri.conf.json has:"
+          echo '  "endpoints": ['
+          echo '    "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/${TAG_NAME}/Defcomm-updater-${TAG_NAME}.json"'
+          echo '  ]'
