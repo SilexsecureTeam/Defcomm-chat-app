@@ -1,70 +1,51 @@
 name: Publish Release
-
 on:
   push:
     tags:
       - "v*"
+    branches: ["*"]
   workflow_dispatch:
 
-# Add ALL required permissions at the workflow level
-permissions:
-  contents: write
-  id-token: write
-
 env:
-  APP_NAME: "Defcomm Desktop Chat App"
+  APP_NAME: "Sample Desktop App"
 
 jobs:
-  # Build changelog once
   changelog:
     runs-on: ubuntu-latest
-    outputs:
-      changelog: ${{ steps.build_changelog.outputs.changelog }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Get all history for changelog
 
       - name: Build changelog
         id: build_changelog
         run: |
-          PREV_TAG=$(git tag --list v* | sort -V | tail -n2 | head -n1 || echo "")
-          if [ -z "$PREV_TAG" ]; then
-            echo "changelog=Initial release" >> $GITHUB_OUTPUT
-          else
-            echo "changelog=$(git log $PREV_TAG...${{ github.ref_name }} --oneline --pretty=format:"- %s")" >> $GITHUB_OUTPUT
-          fi
-
-  # Matrix build (macOS arm64, macOS x86_64, ubuntu, windows)
+          # NOTE: if commits subjects are standardized, you can filter the git log based on feat: and fix:
+          # and then replace "feat:" with "New: " and "fix:" with "Fixed "
+          # when AI gets good, we can also summarized commits into a bullet point list
+          PREV_TAG=$(git tag --list v* | tail -n2 | head -n1)
+          echo "changelog=$(git log $PREV_TAG...${{ github.ref_name }} --pretty=format:"- %s")" >> $GITHUB_OUTPUT
+    outputs:
+      changelog: ${{ steps.build_changelog.outputs.changelog }}
   release:
-    needs: [changelog]
-    runs-on: ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: macos-latest
-            arch: aarch64
-            target: aarch64-apple-darwin
-            tauri_args: "--target aarch64-apple-darwin"
-          - platform: macos-latest
-            arch: x86_64
-            target: x86_64-apple-darwin
-            tauri_args: "--target x86_64-apple-darwin"
-          - platform: ubuntu-22.04 # Use specific version
-            arch: x86_64
-            target: x86_64-unknown-linux-gnu
-            tauri_args: ""
-          - platform: windows-latest
-            arch: x86_64
-            target: x86_64-pc-windows-msvc
-            tauri_args: ""
-
+          - platform: "macos-latest" # for Arm based macs (M1 and above).
+            args: "--target aarch64-apple-darwin"
+          - platform: "macos-latest" # for Intel based macs.
+            args: "--target x86_64-apple-darwin"
+          - platform: "ubuntu-latest"
+            args: ""
+          - platform: "windows-latest"
+            args: ""
+    runs-on: ${{ matrix.platform }}
+    needs: [changelog]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # build the changelog based on the commit messages between the versioned tags
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
@@ -72,251 +53,82 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
+        # NOTE: enterprise developers may hard code a version
         with:
-          node-version: "20"
+          node-version: "lts/*"
           cache: pnpm
-
-      - name: Install frontend dependencies
-        run: pnpm install
-
-      # Fixed Ubuntu dependencies
-      - name: Install Ubuntu dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            build-essential \
-            curl \
-            wget \
-            file \
-            libssl-dev \
-            libgtk-3-dev \
-            libayatana-appindicator3-dev \
-            librsvg2-dev
+          # node-version-file: '.nvmrc'
 
       - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@stable # Set this to dtolnay/rust-toolchain@nightly
         with:
-          toolchain: stable
-          targets: ${{ matrix.target }}
+          # Those targets are only used on macos runners so it's in an `if` to slightly speed up windows and linux builds.
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
 
       - name: Rust cache
         uses: swatinem/rust-cache@v2
         with:
-          workspaces: |
-            ./src-tauri
-          key: ${{ matrix.platform }}-${{ matrix.target }}
+          workspaces: "./src-tauri -> target"
 
-      # ===== Decode base64 signing key to a file on each runner (tags only) =====
-      - name: Decode TAURI signing key to file
-        if: ${{ github.ref_type == 'tag' }}
-        shell: bash
+      - name: Install Ubuntu dependencies
+        if: matrix.platform == 'ubuntu-latest'
         run: |
-          set -euo pipefail
-          TMP_KEY="$RUNNER_TEMP/tauri_signing.key"
-          echo "Decoding TAURI signing key for RUNNER_OS=$RUNNER_OS -> $TMP_KEY"
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            # Use PowerShell to decode base64 into a binary file on Windows runners
-            powershell -NoProfile -Command "[IO.File]::WriteAllBytes('${TMP_KEY}', [Convert]::FromBase64String('${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}'))"
-          else
-            # macOS / Linux: decode base64 to file
-            echo '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' | base64 --decode > "$TMP_KEY"
-            chmod 600 "$TMP_KEY"
-          fi
-          # expose file path for later steps; tauri expects a path when signing
-          echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
-          # optionally expose password if supplied
-          if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" ]; then
-            echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
-          fi
+          sudo apt update
+          xargs sudo apt install -y < environment/apt_packages.txt
 
-      - name: Debug confirm signing key file
-        if: ${{ github.ref_type == 'tag' }}
-        shell: bash
+      - name: Install frontend dependencies
         run: |
-          if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && [ -f "${TAURI_SIGNING_PRIVATE_KEY}" ]; then
-            echo "Signing key exists at: $TAURI_SIGNING_PRIVATE_KEY"
-            ls -l "$TAURI_SIGNING_PRIVATE_KEY" || true
-            echo "File size (bytes): $(wc -c < "$TAURI_SIGNING_PRIVATE_KEY")"
-          else
-            echo "TAURI_SIGNING_PRIVATE_KEY not found or file missing"
-            exit 1
-          fi
+          pnpm install
 
-      # ===== Build with tauri-action =====
+      - name: CI Build
+        if: ${{ github.ref_type == 'branch' }}
+        run: |
+          pnpm rls
+
+      - name: CI upload Windows
+        if: ${{ github.ref_type == 'branch' && matrix.platform == 'windows-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "Windows Installers"
+          path: |
+            src-tauri/release/bundle/msi/*.msi
+            src-tauri/release/bundle/nsis/*.exe
+
+      - name: CI upload macOS
+        if: ${{ github.ref_type == 'branch' && matrix.platform == 'macos-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "macOS Installer"
+          path: |
+            src-tauri/release/bundle/dmg/*.dmg
+
+      - name: CI upload Linux
+        if: ${{ github.ref_type == 'branch' && matrix.platform == 'ubuntu-latest' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: "Linux Distributions"
+          path: |
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/AppImage/*.AppImage
+
+      # TODO: https://tauri.app/v1/guides/building/linux#cross-compiling-tauri-applications-for-arm-based-devices
       - name: Build Tauri app
-        if: ${{ github.ref_type == 'tag' }}
         uses: tauri-apps/tauri-action@v0
+        if: ${{ github.ref_type == 'tag' }}
+        # if u get Error: Resource not accessible by integration
+        # go to repository Settings => Action => General => Workflow permissions => Switch to Read and Write permisions
         env:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          projectPath: ./src-tauri
+          # tauri-action replaces \_\_VERSION\_\_ with the app version
           tagName: ${{ github.ref_name }}
-          releaseName: "${{ env.APP_NAME }} ${{ github.ref_name }}"
+          releaseName: "${{ env.APP_NAME }} v__VERSION__"
           releaseBody: |
-            ${{ needs.changelog.outputs.changelog }}
-
-            ## Installation
-            Download the appropriate installer for your platform.
-
-            ## Auto-update
-            This release supports automatic updates via Tauri's updater.
-          releaseDraft: false
+            ${{needs.changelog.outputs.changelog}}
+            See the assets to download this version and install.
+          releaseDraft: true
           prerelease: false
-          args: ${{ matrix.tauri_args }}
-          includeUpdaterJson: true
-
-      # ===== Process and rename updater artifacts =====
-      - name: Process and rename updater artifacts
-        if: ${{ github.ref_type == 'tag' }}
-        run: |
-          TAG_NAME="${{ github.ref_name }}"
-          VERSION="${TAG_NAME#v}"
-
-          echo "Processing artifacts for tag: $TAG_NAME, version: $VERSION"
-
-          # Go to bundle directory
-          BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
-          if [ -d "$BUNDLE_DIR" ]; then
-            cd "$BUNDLE_DIR"
-            
-            # Generate proper updater JSON
-            cat > "Defcomm-updater-$TAG_NAME.json" << EOF
-            {
-              "version": "$VERSION",
-              "notes": "Release $TAG_NAME",
-              "pub_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-              "platforms": {
-                "darwin-aarch64": {
-                  "signature": "$(cat macos/aarch64/*.sig 2>/dev/null | base64 -w 0 || echo '')",
-                  "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_aarch64.app.tar.gz"
-                },
-                "darwin-x86_64": {
-                  "signature": "$(cat macos/x64/*.sig 2>/dev/null | base64 -w 0 || echo '')",
-                  "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_x64.app.tar.gz"
-                },
-                "linux-x86_64": {
-                  "signature": "$(cat deb/*.sig 2>/dev/null | base64 -w 0 || echo '')",
-                  "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_amd64.deb"
-                },
-                "windows-x86_64": {
-                  "signature": "$(cat msi/*.sig 2>/dev/null | base64 -w 0 || echo '')",
-                  "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/$TAG_NAME/Defcomm_${VERSION}_x64_en-US.msi"
-                }
-              }
-            }
-            EOF
-            
-            # Also create latest.json for backward compatibility
-            cp "Defcomm-updater-$TAG_NAME.json" "latest.json"
-            
-            echo "Created updater JSON files"
-            ls -la *.json
-            
-          else
-            echo "Bundle directory not found: $BUNDLE_DIR"
-            exit 1
-          fi
-
-      - name: Show produced bundles
-        if: ${{ github.ref_type == 'tag' }}
-        run: |
-          BUNDLE_DIR="src-tauri/target/${{ matrix.target }}/release/bundle"
-          echo "Listing bundles in: $BUNDLE_DIR"
-          find "$BUNDLE_DIR" -type f -name "*" | head -20 || echo "No bundles found"
-
-      # ===== Upload artifacts =====
-      - name: Upload platform bundles
-        if: ${{ github.ref_type == 'tag' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: "bundles-${{ matrix.platform }}-${{ matrix.arch }}-${{ github.ref_name }}"
-          path: |
-            src-tauri/target/${{ matrix.target }}/release/bundle/**
-          retention-days: 7
-
-  # Publish job
-  publish:
-    needs: [release]
-    runs-on: ubuntu-latest
-    if: ${{ github.ref_type == 'tag' }}
-    permissions:
-      contents: write
-      id-token: write
-
-    steps:
-      - name: Download all build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: ./all-bundles
-          pattern: bundles-*
-          merge-multiple: true
-
-      - name: List downloaded files
-        run: |
-          echo "==== Downloaded files structure ===="
-          find all-bundles -type f -name "*" | head -50
-          echo "===================================="
-
-      - name: Prepare release assets
-        run: |
-          TAG_NAME="${{ github.ref_name }}"
-          mkdir -p release-assets
-
-          # Copy all files to release-assets directory
-          find all-bundles -type f \( -name "*.dmg" -o -name "*.app.tar.gz" -o -name "*.deb" -o -name "*.AppImage" -o -name "*.msi" -o -name "*.json" -o -name "*.sig" \) -exec cp {} release-assults/ \;
-
-          # Ensure we have the updater JSON
-          if [ ! -f "release-assets/Defcomm-updater-$TAG_NAME.json" ]; then
-            # Create it if missing
-            VERSION="${TAG_NAME#v}"
-            cat > "release-assets/Defcomm-updater-$TAG_NAME.json" << EOF
-            {
-              "version": "$VERSION",
-              "notes": "Release $TAG_NAME",
-              "pub_date": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-              "platforms": {}
-            }
-            EOF
-          fi
-
-          # Create latest.json
-          cp "release-assets/Defcomm-updater-$TAG_NAME.json" "release-assets/latest.json"
-
-          echo "Release assets prepared:"
-          ls -la release-assets/
-
-      - name: Create GitHub Release
-        id: create_release
-        uses: softprops/action-gh-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          name: "${{ env.APP_NAME }} ${{ github.ref_name }}"
-          body: |
-            ${{ needs.changelog.outputs.changelog }}
-
-            ## Installation
-            Download the appropriate installer for your platform.
-
-            ### Auto-update
-            This release supports automatic updates via Tauri's updater.
-
-            **Updater URL:** `https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/${{ github.ref_name }}/Defcomm-updater-${{ github.ref_name }}.json`
-          draft: false
-          prerelease: false
-          files: |
-            release-assets/*
-
-      - name: Show release info
-        run: |
-          echo "Release created: ${{ steps.create_release.outputs.html_url }}"
-          echo ""
-          echo "Updater JSON URL:"
-          echo "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/${{ github.ref_name }}/Defcomm-updater-${{ github.ref_name }}.json"
+          args: ${{ matrix.args }}
