@@ -80,7 +80,7 @@ jobs:
       # Build step for branches (CI quick build)
       - name: CI Build (branches only)
         if: ${{ github.ref_type == 'branch' }}
-        run: pnpm run build
+        run: pnpm tauri build
 
       # ===== Decode base64 signing key to a file on each runner (tags only) =====
       - name: Decode TAURI signing key to file (tags only)
