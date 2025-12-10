@@ -96,16 +96,43 @@ jobs:
           set -euo pipefail
           TMP_KEY="$RUNNER_TEMP/tauri_signing.key"
           echo "Decoding TAURI signing key for RUNNER_OS=$RUNNER_OS -> $TMP_KEY"
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            powershell -NoProfile -Command "[IO.File]::WriteAllBytes('${TMP_KEY}', [Convert]::FromBase64String('${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}'))"
-          else
-            echo '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' | base64 --decode > "$TMP_KEY"
-            chmod 600 "$TMP_KEY"
+
+          # read secret into a shell variable (expanded by GH Actions)
+          SECRET="${{ secrets.TAURI_SIGNING_PRIVATE_KEY || '' }}"
+
+          if [ -z "$SECRET" ]; then
+            echo "❌ TAURI_SIGNING_PRIVATE_KEY secret is empty. Please check repository secrets."
+            exit 1
           fi
+
+          # If user accidentally stored the raw PEM in secret (with BEGIN line), write it raw
+          if printf '%s' "$SECRET" | grep -q '-----BEGIN'; then
+            printf '%s' "$SECRET" > "$TMP_KEY"
+          else
+            # Otherwise assume it's base64 and decode. Use printf to preserve content exactly.
+            printf '%s' "$SECRET" | base64 --decode > "$TMP_KEY" || {
+              echo "❌ Failed to base64-decode TAURI_SIGNING_PRIVATE_KEY. Is it valid base64?"
+              exit 1
+            }
+          fi
+
+          chmod 600 "$TMP_KEY"
           echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
-          if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" ]; then
+
+          # Export password (plain text) if set — DO NOT base64 the password.
+          if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD || '' }}" ]; then
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
+
+      # Safe, minimal debug preview of the key file (tags only)
+      - name: Quick debug: signing key file summary (tags only)
+        if: ${{ github.ref_type == 'tag' }}
+        shell: bash
+        run: |
+          echo "Signing key path: $TAURI_SIGNING_PRIVATE_KEY"
+          ls -l "$TAURI_SIGNING_PRIVATE_KEY" || true
+          echo "Safe preview (first 3 lines):"
+          head -n 3 "$TAURI_SIGNING_PRIVATE_KEY" | sed -n '1,3p' || true
 
       - name: Debug confirm signing key file (tags only)
         if: ${{ github.ref_type == 'tag' }}
