@@ -1,0 +1,35 @@
+{
+  "version": "0.1.1",
+  "notes": "See the assets to download this version and install.",
+  "pub_date": "2025-12-14T18:12:03.143Z",
+  "platforms": {
+    "darwin-aarch64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZXEvZnlTZkFQNHNBTzlZVFFic3NSNTV5cEZUUGpLN0NONUdHbUhla1dwckRVaDdoUGxsWUt6aGU3UUIxQjgwV21TRGtFL2FjUEpzV0JicDZrQXRCWEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1NzA4CWZpbGU6RGVmY29tbS5hcHAudGFyLmd6CkNpWXgydzZIekF0dnlGVFhlQjlTNi9QRGtUUUpEMHF1bmRwekkwbGNMeWsraEM2dENodFNGSGxTdWZzSFlIVHQySTJlSEFrT2g4eVNRZWcrSHMvYUNBPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_aarch64.app.tar.gz"
+    },
+    "darwin-aarch64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZXEvZnlTZkFQNHNBTzlZVFFic3NSNTV5cEZUUGpLN0NONUdHbUhla1dwckRVaDdoUGxsWUt6aGU3UUIxQjgwV21TRGtFL2FjUEpzV0JicDZrQXRCWEFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1NzA4CWZpbGU6RGVmY29tbS5hcHAudGFyLmd6CkNpWXgydzZIekF0dnlGVFhlQjlTNi9QRGtUUUpEMHF1bmRwekkwbGNMeWsraEM2dENodFNGSGxTdWZzSFlIVHQySTJlSEFrT2g4eVNRZWcrSHMvYUNBPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_aarch64.app.tar.gz"
+    },
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZWlSK3dPdVdsUU9Lem9ZVHBhTHRiejZBaXgzZDB3ZnBqeDZMekRWeU0zZCtDcHVnMUZmT3dkUHNDelNOUWdLYS9KdzIyL2hSVkg3UTRpaCtVMHg3eGdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1ODk2CWZpbGU6RGVmY29tbV8wLjEuMF94NjRfZW4tVVMubXNpCmZSSWZmNURRRzR6MFpiSndGcGxrUXd1eGdrSm1IZ3FsVEJjczlIZFRndDBaOE9PMThmWEltdHNzMjB2dE9mZngxYW9weG9FRW44Zmlqb1kwQmlPcEJnPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_0.1.0_x64_en-US.msi"
+    },
+    "windows-x86_64-msi": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZWlSK3dPdVdsUU9Lem9ZVHBhTHRiejZBaXgzZDB3ZnBqeDZMekRWeU0zZCtDcHVnMUZmT3dkUHNDelNOUWdLYS9KdzIyL2hSVkg3UTRpaCtVMHg3eGdzPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1ODk2CWZpbGU6RGVmY29tbV8wLjEuMF94NjRfZW4tVVMubXNpCmZSSWZmNURRRzR6MFpiSndGcGxrUXd1eGdrSm1IZ3FsVEJjczlIZFRndDBaOE9PMThmWEltdHNzMjB2dE9mZngxYW9weG9FRW44Zmlqb1kwQmlPcEJnPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_0.1.0_x64_en-US.msi"
+    },
+    "windows-x86_64-nsis": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZWlrMkhoTi93cHVzOGxNdGlXT09pQWNtNHJCRThwcGJIVmhsUkVNVDZlNzkzMDFEN0gva0ZHSFI4clRKbkVjR1V6QlppcGs4Y0w0Y1lPcU4wQXNQOFFrPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1ODk2CWZpbGU6RGVmY29tbV8wLjEuMF94NjQtc2V0dXAuZXhlCmMrc3l0NEVsbDRFNTFSbTFBYkFLdHRGUFlSTjRicE5NcDB5U0JEMlluVkhBM1JmYmhFT3JwTWxJRDh0RFZIVmw4di9yZDNqUStaWWxzZlQwWEdnd0FRPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_0.1.0_x64-setup.exe"
+    },
+    "darwin-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZWh2RDB0K0liWVdIbmh5dll0aVBDaE5HdjVKMlhLbklpb1gzbW9MYlVqVS81MjdZMGRubXcwSlg1akZGVmxFZXF5ZjVxa2RodE5kTTlmUXpxczEzakFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1OTE4CWZpbGU6RGVmY29tbS5hcHAudGFyLmd6CnNoT1kzNDl3Qm9qaUhBRWdBWFllelFjaTQrVGp6Tk5RanNQeGVQeVVLdDV0QzVTT3pMb2hWM1dMNWVjU0Q1Yzg4dkhKclNqVVQ1T2lnT2c4QTBnOEJBPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_x64.app.tar.gz"
+    },
+    "darwin-x86_64-app": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSSmFMaWZ3dUUwZWh2RDB0K0liWVdIbmh5dll0aVBDaE5HdjVKMlhLbklpb1gzbW9MYlVqVS81MjdZMGRubXcwSlg1akZGVmxFZXF5ZjVxa2RodE5kTTlmUXpxczEzakFJPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzY1NzM1OTE4CWZpbGU6RGVmY29tbS5hcHAudGFyLmd6CnNoT1kzNDl3Qm9qaUhBRWdBWFllelFjaTQrVGp6Tk5RanNQeGVQeVVLdDV0QzVTT3pMb2hWM1dMNWVjU0Q1Yzg4dkhKclNqVVQ1T2lnT2c4QTBnOEJBPT0K",
+      "url": "https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/0.1.3/Defcomm_x64.app.tar.gz"
+    }
+  }
+}
