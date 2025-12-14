@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - "v*"
-    branches: "*"
+    branches: ["*"]
   workflow_dispatch:
 
 # release creation requires write permission to repository contents
@@ -29,7 +29,6 @@ jobs:
         run: |
           PREV_TAG=$(git tag --list v* | tail -n2 | head -n1)
           echo "changelog=$(git log $PREV_TAG...${{ github.ref_name }} --pretty=format:"- %s")" >> $GITHUB_OUTPUT
-
   # Matrix build (macOS arm64, macOS x86_64, ubuntu, windows)
   release:
     needs: [changelog]
@@ -91,7 +90,6 @@ jobs:
           set -euo pipefail
           TMP_KEY="$RUNNER_TEMP/tauri_signing.key"
           echo "Decoding TAURI signing key for RUNNER_OS=$RUNNER_OS -> $TMP_KEY"
-
           if [ "$RUNNER_OS" = "Windows" ]; then
             # Use PowerShell to decode base64 into a binary file on Windows runners
             powershell -NoProfile -Command "[IO.File]::WriteAllBytes('${TMP_KEY}', [Convert]::FromBase64String('${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}'))"
@@ -100,14 +98,12 @@ jobs:
             echo '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' | base64 --decode > "$TMP_KEY"
             chmod 600 "$TMP_KEY"
           fi
-
           # expose file path for later steps; tauri expects a path when signing
           echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
           # optionally expose password if supplied
           if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" ]; then
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
-
       - name: Debug confirm signing key file (tags only)
         if: ${{ github.ref_type == 'tag' }}
         shell: bash
@@ -120,7 +116,6 @@ jobs:
             echo "❌ TAURI_SIGNING_PRIVATE_KEY not found or file missing"
             exit 1
           fi
-
       # ===== Build with tauri-action on tags (this produces bundle/, latest.json, and .sig when signing present) =====
       - name: Build Tauri app (tags only)
         if: ${{ github.ref_type == 'tag' }}
@@ -146,7 +141,6 @@ jobs:
         run: |
           echo "Listing bundles created by Tauri (src-tauri/target/release/bundle):"
           find src-tauri/target/release/bundle -maxdepth 5 -type f -print || true
-
       # ===== upload produced bundles as workflow artifact (tags only) =====
       - name: Upload platform bundles (tags only)
         if: ${{ github.ref_type == 'tag' }}
@@ -156,7 +150,6 @@ jobs:
           path: |
             src-tauri/target/release/bundle/**
             src-tauri/target/release/bundle/*/**
-
   # Publish job: collects artifacts from all matrix builds, creates a Release, uploads each file individually
   publish:
     needs: [release]
@@ -173,7 +166,6 @@ jobs:
           echo "==== downloaded files ===="
           find all-bundles -type f -maxdepth 6 -print
           echo "=========================="
-
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -205,7 +197,6 @@ jobs:
               "${UPLOAD_URL}?name=${filename}"
             echo "Uploaded: $filename"
           done
-
       - name: Show release assets URLs
         run: |
           echo "Release created: ${{ steps.create_release.outputs.html_url }}"
