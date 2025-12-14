@@ -6,32 +6,30 @@ import { motion } from "framer-motion";
 import { useLocation, useOutletContext } from "react-router-dom";
 
 export default function ChatHeader() {
-  const { typingUsers } = useContext(ChatContext);
-  const location = useLocation();
+  const { typingUsers, selectedChatUser } = useContext(ChatContext);
   const { setShowRightPanel } = useOutletContext();
-  const chatUserData = location?.state;
 
   return (
     <div className="flex items-center justify-between p-4 border-b border-gray-700">
-      {chatUserData ? (
+      {selectedChatUser ? (
         <div className="flex items-center space-x-4">
           <figure className="relative w-12 h-12 bg-gray-400 rounded-full flex items-center justify-center text-black font-bold">
             <img
               src={
-                chatUserData?.image
-                  ? `${import.meta.env.VITE_BASE_URL}${chatUserData?.image}`
+                selectedChatUser?.image
+                  ? `${import.meta.env.VITE_BASE_URL}${selectedChatUser?.image}`
                   : logoIcon
               }
-              alt={chatUserData?.contact_name?.split("")[0]}
+              alt={selectedChatUser?.contact_name?.split("")[0]}
               className="rounded-full object-cover w-12 h-12"
             />
             <span
               className={`${
-                chatUserData?.contact_status === "active"
+                selectedChatUser?.contact_status === "active"
                   ? "bg-green-500"
-                  : chatUserData?.contact_status === "pending"
+                  : selectedChatUser?.contact_status === "pending"
                   ? "bg-red-500"
-                  : chatUserData?.contact_status === "busy"
+                  : selectedChatUser?.contact_status === "busy"
                   ? "bg-yellow-400"
                   : "bg-gray-400"
               } w-3 h-3 absolute bottom-[-2%] right-[5%] rounded-full border-[2px] border-white`}
@@ -39,9 +37,9 @@ export default function ChatHeader() {
           </figure>
           <div>
             <div className="font-semibold capitalize">
-              {chatUserData?.contact_name}
+              {selectedChatUser?.contact_name}
             </div>
-            {typingUsers?.[Number(chatUserData?.contact_id)] && (
+            {typingUsers?.[Number(selectedChatUser?.contact_id)] && (
               <div className="text-green-400 text-sm">Typing...</div>
             )}
           </div>

@@ -26,8 +26,6 @@ export default function Sidebar({ onMessageClick, showChatList }) {
     selectedChatUser,
   } = useContext(ChatContext);
 
-  console.log(selectedChatUser);
-
   const onChatPage =
     location.pathname === "/dashboard" || location.pathname.includes("/chat");
 
