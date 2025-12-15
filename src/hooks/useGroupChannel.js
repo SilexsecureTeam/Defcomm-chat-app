@@ -54,7 +54,7 @@ const useGroupChannels = ({ groups, token }) => {
         const incomingMsg = data.data;
         const senderId = incomingMsg.user_id;
 
-        console.log("Group message received:", data);
+        //.log("Group message received:", data);
 
         if (data?.state === "is_typing") {
           setGroupUserTyping?.((prev) => ({
@@ -120,12 +120,12 @@ const useGroupChannels = ({ groups, token }) => {
         });
       };
 
-      // ✅ Bind with named handlers
+      // Bind with named handlers
       channel.bind("pusher:subscription_succeeded", handleSubSuccess);
       channel.bind("pusher:subscription_error", handleSubError);
       channel.bind("group.message.sent", handleMessage);
 
-      // ✅ Cleanup for this group
+      // Cleanup for this group
       return () => {
         channel.unbind("pusher:subscription_succeeded", handleSubSuccess);
         channel.unbind("pusher:subscription_error", handleSubError);
@@ -153,7 +153,7 @@ const useGroupChannels = ({ groups, token }) => {
     try {
       pusherRef.current?.disconnect();
     } catch (e) {
-      console.warn("Cleanup error:", e);
+      //console.warn("Cleanup error:", e);
     }
   };
 };

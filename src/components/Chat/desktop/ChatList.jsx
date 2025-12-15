@@ -222,7 +222,7 @@ function ChatList() {
               ))}
 
               {/* No users state */}
-              {filteredContacts?.length === 0 && (
+              {search?.trim() && filteredContacts.length === 0 && (
                 <p className="text-xs text-gray-500 px-2">
                   No users found for “{search}”.
                 </p>
@@ -274,7 +274,7 @@ function ChatList() {
               ))}
 
               {/* No groups state */}
-              {filteredGroups?.length === 0 && (
+              {search?.trim() && filteredGroups.length === 0 && (
                 <p className="text-xs text-gray-500 px-2">
                   No groups found for “{search}”.
                 </p>

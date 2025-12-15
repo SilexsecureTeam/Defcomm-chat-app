@@ -40,7 +40,7 @@ const DefcommLogin = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative w-full min-h-screen flex flex-col items-center justify-center text-white p-6"
+        className="relative w-full h-screen flex flex-col items-center justify-center text-white p-6 overflow-y-auto"
         style={{
           background: `linear-gradient(to bottom, #101500 10%, #000000 15%, #000000 65%, #36460A 90%)`,
           backgroundPosition: "center",

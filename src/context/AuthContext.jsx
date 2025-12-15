@@ -13,7 +13,7 @@ export const AuthProvider = ({ children }) => {
       try {
         const savedUser = await get("authUser");
         if (savedUser) {
-          console.log("Restored user:", savedUser);
+          //console.log("Restored user:", savedUser);
           setAuthDetails(savedUser);
         }
       } catch (err) {

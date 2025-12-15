@@ -10,7 +10,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ScanLogin from "./ScanLogin";
 
 const LoginForm = ({ version }) => {
-  const [useScanMode, setUseScanMode] = useState(false); // 🆕 toggle between modes
+  const [useScanMode, setUseScanMode] = useState(false); // toggle between modes
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -69,7 +69,7 @@ const LoginForm = ({ version }) => {
   };
 
   return (
-    <div className="w-full max-w-[780px] flex justify-center lg:justify-end items-center pt-20">
+    <div className="w-full max-w-[780px] flex justify-center lg:justify-end items-center pt-44">
       {useScanMode ? (
         <ScanLogin onToggle={() => setUseScanMode(false)} />
       ) : (
