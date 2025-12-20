@@ -96,6 +96,7 @@ jobs:
         run: pnpm tauri build
       - name: Set Tauri version from Git tag
         if: ${{ github.ref_type == 'tag' }}
+        shell: bash
         run: |
           TAG_VERSION=${GITHUB_REF_NAME#v}   # remove the "v" prefix
           echo "Updating package.json version to $TAG_VERSION"
