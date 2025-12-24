@@ -39,8 +39,6 @@ const App = () => {
       try {
         const { check } = await import("@tauri-apps/plugin-updater");
         const update = await check();
-        console.log(update);
-
         if (update?.available) {
           const releaseDate = new Date(update.date).getTime();
           const graceDays = import.meta.env.VITE_UPDATE_GRACE_DAYS || 3; // fallback 3 days

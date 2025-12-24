@@ -123,15 +123,15 @@ const GroupChatInterface = () => {
         {mergedGroupInfo && (
           <div className="flex items-center space-x-4">
             <div
-              className="w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg"
+              className="shrink-0 w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg"
               style={{ backgroundColor: COLORS.avatar }}
             >
-              {mergedGroupInfo?.group_meta?.name?.charAt(0)}
+              {mergedGroupInfo?.group_meta?.name?.slice(0, 2)}
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <h2
-                  className="text-lg font-semibold"
+                  className="text-[16px] font-semibold"
                   style={{ color: COLORS.textLight }}
                 >
                   {mergedGroupInfo?.group_meta?.name}

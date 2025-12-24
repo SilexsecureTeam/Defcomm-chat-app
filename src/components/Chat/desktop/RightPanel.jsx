@@ -190,7 +190,9 @@ export default function RightPanel() {
             files?.length > 0 ? (
               files.map((file, i) => (
                 <a
-                  href={`${import.meta.env.BASE_URL}secure/${file?.message}`}
+                  href={`${import.meta.env.VITE_BASE_URL}secure/${
+                    file?.message
+                  }`}
                   target="_blank"
                   key={file?.id}
                   className="bg-gray-900/60 flex gap-4 items-center text-sm p-2 rounded mb-1"

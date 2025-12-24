@@ -114,7 +114,7 @@ const usePusherChannel = ({ userId, token }) => {
         selectedChatUser?.contact_id_encrypt === cacheKeyUserId;
 
       if (shouldToast) {
-        console.log(newMessage, isMyChat, cacheKeyUserId);
+        //console.log(newMessage, isMyChat, cacheKeyUserId);
         addNotification(newMessage);
         onNewNotificationToast({
           message: newMessage?.message,

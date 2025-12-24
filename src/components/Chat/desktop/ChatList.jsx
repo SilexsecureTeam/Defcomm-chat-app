@@ -261,7 +261,7 @@ function ChatList() {
                     "bg-gray-800"
                   } group items-center p-3 font-medium`}
                 >
-                  <figure className="relative w-12 h-12 bg-[#B49E69] rounded-full flex items-center justify-center text-white font-bold">
+                  <figure className="shrink-0 relative w-12 h-12 bg-[#B49E69] rounded-full flex items-center justify-center text-white font-bold">
                     {group?.group_name?.slice(0, 2).toUpperCase()}
                   </figure>
                   <div>
