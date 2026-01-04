@@ -88,6 +88,8 @@ jobs:
       - name: Prepare linuxdeploy (Linux only)
         if: runner.os == 'Linux'
         run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 squashfs-tools wget xz-utils file
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
           sudo mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
@@ -95,7 +97,7 @@ jobs:
           chmod +x linuxdeploy-plugin-gtk.sh
           wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh
           chmod +x linuxdeploy-plugin-gstreamer.sh
-          echo "export APPIMAGE_EXTRACT_AND_RUN=true" >> $GITHUB_ENV
+          echo "export APPIMAGE_EXTRACT_AND_RUN=1" >> $GITHUB_ENV
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
