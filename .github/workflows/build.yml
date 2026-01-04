@@ -83,24 +83,30 @@ jobs:
             squashfs-tools \
             wget \
             xz-utils \
-            file
+            file \
+            patchelf
 
       - name: Prepare linuxdeploy (Linux only)
         if: runner.os == 'Linux'
         run: |
-          # Pre-download linuxdeploy to avoid auto-download issues
+          sudo apt-get update
+          sudo apt-get install -y libfuse2 squashfs-tools wget xz-utils file patchelf
+
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
           sudo mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
 
-          # Plugins for GTK/GStreamer
           wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
           chmod +x linuxdeploy-plugin-gtk.sh
+
           wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh
           chmod +x linuxdeploy-plugin-gstreamer.sh
 
-          # Force AppImage to extract and run without FUSE
-          echo "export APPIMAGE_EXTRACT_AND_RUN=1" >> $GITHUB_ENV
+          wget -q https://github.com/tauri-apps/binary-releases/releases/download/apprun-old/AppRun-x86_64
+          chmod +x AppRun-x86_64
+          sudo mv AppRun-x86_64 /usr/local/bin/
+
+          echo "APPIMAGE_EXTRACT_AND_RUN=1" >> $GITHUB_ENV
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
