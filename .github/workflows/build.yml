@@ -7,7 +7,6 @@ on:
     branches: ["*"]
   workflow_dispatch:
 
-# release creation requires write permission to repository contents
 permissions:
   contents: write
 
@@ -15,7 +14,6 @@ env:
   APP_NAME: "Defcomm Desktop Chat App"
 
 jobs:
-  # Build changelog once
   changelog:
     runs-on: ubuntu-latest
     outputs:
@@ -29,7 +27,7 @@ jobs:
         run: |
           PREV_TAG=$(git tag --list v* | tail -n2 | head -n1)
           echo "changelog=$(git log $PREV_TAG...${{ github.ref_name }} --pretty=format:"- %s")" >> $GITHUB_OUTPUT
-  # Matrix build (macOS arm64, macOS x86_64, ubuntu, windows)
+
   release:
     needs: [changelog]
     runs-on: ${{ matrix.platform }}
@@ -93,8 +91,13 @@ jobs:
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
           sudo mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
+          wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+          chmod +x linuxdeploy-plugin-gtk.sh
+          wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh
+          chmod +x linuxdeploy-plugin-gstreamer.sh
+          echo "export APPIMAGE_EXTRACT_AND_RUN=true" >> $GITHUB_ENV
 
-      - name: Install Rust stable (add mac targets where helpful)
+      - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
@@ -104,53 +107,34 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      # Build step for branches (CI quick build)
       - name: CI Build (branches only)
         if: ${{ github.ref_type == 'branch' }}
         run: pnpm tauri build
+
       - name: Set Tauri version from Git tag
         if: ${{ github.ref_type == 'tag' }}
         shell: bash
         run: |
-          TAG_VERSION=${GITHUB_REF_NAME#v}   # remove the "v" prefix
-          echo "Updating package.json version to $TAG_VERSION"
+          TAG_VERSION=${GITHUB_REF_NAME#v}
           jq ".version = \"$TAG_VERSION\"" package.json > package.tmp.json && mv package.tmp.json package.json
 
-      # ===== Decode base64 signing key to a file on each runner (tags only) =====
       - name: Decode TAURI signing key to file (tags only)
         if: ${{ github.ref_type == 'tag' }}
         shell: bash
         run: |
           set -euo pipefail
           TMP_KEY="$RUNNER_TEMP/tauri_signing.key"
-          echo "Decoding TAURI signing key for RUNNER_OS=$RUNNER_OS -> $TMP_KEY"
           if [ "$RUNNER_OS" = "Windows" ]; then
-            # Use PowerShell to decode base64 into a binary file on Windows runners
             powershell -NoProfile -Command "[IO.File]::WriteAllBytes('${TMP_KEY}', [Convert]::FromBase64String('${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}'))"
           else
-            # macOS / Linux: decode base64 to file
             echo '${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}' | base64 --decode > "$TMP_KEY"
             chmod 600 "$TMP_KEY"
           fi
-          # expose file path for later steps; tauri expects a path when signing
           echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
-          # optionally expose password if supplied
           if [ -n "${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" ]; then
             echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
           fi
-      - name: Debug confirm signing key file (tags only)
-        if: ${{ github.ref_type == 'tag' }}
-        shell: bash
-        run: |
-          if [ -n "${TAURI_SIGNING_PRIVATE_KEY:-}" ] && [ -f "${TAURI_SIGNING_PRIVATE_KEY}" ]; then
-            echo "✅ Signing key exists at: $TAURI_SIGNING_PRIVATE_KEY"
-            ls -l "$TAURI_SIGNING_PRIVATE_KEY" || true
-            echo "File size (bytes): $(wc -c < "$TAURI_SIGNING_PRIVATE_KEY")"
-          else
-            echo "❌ TAURI_SIGNING_PRIVATE_KEY not found or file missing"
-            exit 1
-          fi
-      # ===== Build with tauri-action on tags (this produces bundle/, latest.json, and .sig when signing present) =====
+
       - name: Build Tauri app (tags only)
         if: ${{ github.ref_type == 'tag' }}
         uses: tauri-apps/tauri-action@v0
@@ -166,16 +150,14 @@ jobs:
         env:
           CI: true
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # pass the path to the decoded key file (not the raw secret)
           TAURI_SIGNING_PRIVATE_KEY: ${{ env.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ env.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
 
       - name: Show produced bundles (tags only)
         if: ${{ github.ref_type == 'tag' }}
         run: |
-          echo "Listing bundles created by Tauri (src-tauri/target/release/bundle):"
           find src-tauri/target/release/bundle -maxdepth 5 -type f -print || true
-      # ===== upload produced bundles as workflow artifact (tags only) =====
+
       - name: Upload platform bundles (tags only)
         if: ${{ github.ref_type == 'tag' }}
         uses: actions/upload-artifact@v4
@@ -184,7 +166,7 @@ jobs:
           path: |
             src-tauri/target/release/bundle/**
             src-tauri/target/release/bundle/*/**
-  # Publish job: collects artifacts from all matrix builds, creates a Release, uploads each file individually
+
   publish:
     needs: [release]
     runs-on: ubuntu-latest
@@ -195,11 +177,6 @@ jobs:
         with:
           path: ./all-bundles
 
-      - name: List downloaded files
-        run: |
-          echo "==== downloaded files ===="
-          find all-bundles -type f -maxdepth 6 -print
-          echo "=========================="
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -220,21 +197,14 @@ jobs:
         run: |
           set -euo pipefail
           cd all-bundles
-          # upload any file discovered
           find . -type f -print0 | while IFS= read -r -d '' f; do
             filename=$(basename "$f")
-            echo "Uploading $filename ..."
             curl --fail -sS -X POST \
               -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Content-Type: application/octet-stream" \
               --data-binary @"$f" \
               "${UPLOAD_URL}?name=${filename}"
-            echo "Uploaded: $filename"
           done
-      - name: Show release assets URLs
-        run: |
-          echo "Release created: ${{ steps.create_release.outputs.html_url }}"
-          echo "You can find assets at: ${{ steps.create_release.outputs.html_url }}"
 
       - name: Restore package.json
         if: ${{ github.ref_type == 'tag' }}
