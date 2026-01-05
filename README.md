@@ -69,7 +69,7 @@ When a new version is released, the app will notify users and update automatical
 If you encounter any issues or have suggestions:
 
 - Open an issue:  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/issue>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/issues/new>
 
 ## 📄 License
 
