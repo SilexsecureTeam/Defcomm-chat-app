@@ -42,7 +42,7 @@ export default function TitleBar() {
         style={{ WebkitAppRegion: "drag" }}
       >
         <img src={mainLogo} alt="Logo" className="w-6 h-6" />
-        <span className="font-medium text-sm">Defcomm</span>
+        <span className="font-medium text-sm">Defcomm Chat</span>
       </div>
 
       {/* Right: Window controls */}
