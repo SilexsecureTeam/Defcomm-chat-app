@@ -138,9 +138,16 @@ jobs:
       # Linux
       - name: Build Tauri app (Linux)
         if: ${{ github.ref_type == 'tag' && matrix.platform == 'ubuntu-latest' }}
-        run: pnpm tauri build
+        uses: tauri-apps/tauri-action@v0
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: "${{ env.APP_NAME }} v${{ github.ref_name }}"
+          releaseBody: |
+            ${{ needs.changelog.outputs.changelog }}
+          args: ${{ matrix.tauri_args }}
         env:
           CI: true
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Windows
       - name: Build Tauri app (Windows)
