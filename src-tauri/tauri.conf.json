@@ -6,7 +6,7 @@
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "pnpm build && copyfiles splashscreen.html dist/",
+    "beforeBuildCommand": "pnpm build && npx copyfiles splashscreen.html dist/",
     "frontendDist": "../dist"
   },
   "app": {
