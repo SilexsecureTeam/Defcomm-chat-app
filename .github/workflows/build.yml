@@ -83,8 +83,7 @@ jobs:
             squashfs-tools \
             wget \
             xz-utils \
-            file \
-            patchelf
+            file
 
       - name: Prepare linuxdeploy (Linux only)
         if: runner.os == 'Linux'
@@ -92,20 +91,24 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libfuse2 squashfs-tools wget xz-utils file patchelf
 
+          # Download linuxdeploy
           wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
           chmod +x linuxdeploy-x86_64.AppImage
           sudo mv linuxdeploy-x86_64.AppImage /usr/local/bin/linuxdeploy
 
+          # Download plugins
           wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
           chmod +x linuxdeploy-plugin-gtk.sh
 
           wget -q https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gstreamer/master/linuxdeploy-plugin-gstreamer.sh
           chmod +x linuxdeploy-plugin-gstreamer.sh
 
+          # Download AppRun
           wget -q https://github.com/tauri-apps/binary-releases/releases/download/apprun-old/AppRun-x86_64
           chmod +x AppRun-x86_64
           sudo mv AppRun-x86_64 /usr/local/bin/
 
+          # Tell AppImage to extract and run (avoid FUSE)
           echo "APPIMAGE_EXTRACT_AND_RUN=1" >> $GITHUB_ENV
 
       - name: Install Rust stable
@@ -155,8 +158,8 @@ jobs:
           releaseBody: |
             ${{ needs.changelog.outputs.changelog }}
             See the assets to download this version and install.
-          releaseDraft: true
-          prerelease: false
+          # releaseDraft: true
+          # prerelease: false
           args: ${{ matrix.tauri_args }}
         env:
           CI: true
