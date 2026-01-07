@@ -83,9 +83,6 @@ const AppInner = () => {
 
   const isExpired = forcedUpdate && Date.now() >= forcedUpdate.deadline;
 
-  // Wait for userId before creating persister
-  if (!userId) return <div>Loading user data...</div>;
-
   const persister = createTauriPersister({ userId });
 
   return (
@@ -98,6 +95,7 @@ const AppInner = () => {
         forcedUpdate={forcedUpdate}
         isExpired={isExpired}
         setBypassed={setBypassed}
+        bypassed={bypassed}
       />
     </PersistQueryClientProvider>
   );
@@ -106,7 +104,7 @@ const AppInner = () => {
 /**
  * Component that renders the main UI after React Query cache is restored
  */
-const PersistedApp = ({ forcedUpdate, isExpired, setBypassed }) => {
+const PersistedApp = ({ forcedUpdate, isExpired, setBypassed, bypassed }) => {
   const isRestoring = useIsRestoring();
 
   if (isRestoring) return <div>Loading cached data...</div>;
