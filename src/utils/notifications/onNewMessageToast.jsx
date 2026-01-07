@@ -8,7 +8,6 @@ import {
 } from "react-icons/fa";
 import audioController from "../audioController";
 import notificationSound from "../../assets/audio/bell.mp3";
-
 import {
   requestPermission,
   isPermissionGranted,
@@ -29,18 +28,13 @@ export const onNewNotificationToast = async ({
 }) => {
   const isCall = type === "call";
   const isGroup = Boolean(groupName);
-  const isReply = Boolean(tagMess);
+  const isReply = Boolean(tagMess); // <-- reply flag
   const isMention = isGroup && tagUser && tagUser.includes(myId);
 
   // Play sound
   audioController.playRingtone(notificationSound);
 
-  const safeMessage =
-    isChatVisible && !isCall
-      ? "**********"
-      : isCall
-      ? "📞 Incoming Secure Call"
-      : message || "New encrypted message";
+  const safeMessage = !isCall ? "**********" : "📞 Incoming Secure Call";
 
   // --- SYSTEM NOTIFICATION (Tauri) ---
   try {
@@ -65,7 +59,7 @@ export const onNewNotificationToast = async ({
         title = `💬 ${groupName} (Mention)`;
         body = `${senderName} mentioned you: ${safeMessage}`;
       } else if (isReply) {
-        title = `↩️ ${groupName} (Reply)`;
+        title = `${isGroup ? "↩️ " + groupName : "↩️ New Message"} (Reply)`;
         body = `${senderName} replied${
           tagUser ? ` to ${tagUser}` : ""
         }: ${safeMessage}`;
@@ -77,11 +71,10 @@ export const onNewNotificationToast = async ({
         body = `${senderName}: ${safeMessage}`;
       }
 
-      // Send notification
       await sendNotification({
         title,
         body,
-        icon: isCall ? "icons/call.png" : "icons/message.png", // add your icon paths
+        icon: isCall ? "icons/call.png" : "icons/message.png",
         actions,
         tag: isGroup ? groupName : senderName,
         renotify: true,
@@ -97,10 +90,8 @@ export const onNewNotificationToast = async ({
     const { payload } = event;
     if (payload === "accept_call") {
       console.log("Call accepted");
-      // handle accept call (e.g., join meeting)
     } else if (payload === "decline_call") {
       console.log("Call declined");
-      // handle decline call (e.g., dismiss call)
     }
   });
 
@@ -125,13 +116,13 @@ export const onNewNotificationToast = async ({
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-red-900 border border-red-600">
             <FaAt className="text-red-400 text-lg" />
           </div>
-        ) : isGroup ? (
-          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-900 border border-green-600">
-            <FaUsers className="text-green-400 text-lg" />
-          </div>
         ) : isReply ? (
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-olive-900 border border-olive-600">
             <FaReply className="text-olive-300 text-lg" />
+          </div>
+        ) : isGroup ? (
+          <div className="w-10 h-10 flex items-center justify-center rounded-full bg-green-900 border border-green-600">
+            <FaUsers className="text-green-400 text-lg" />
           </div>
         ) : (
           <div className="w-10 h-10 flex items-center justify-center rounded-full bg-olive-900 border border-olive-600">
@@ -177,6 +168,5 @@ export const onNewNotificationToast = async ({
   //   closeOnClick: true,
   //   pauseOnHover: true,
   //   draggable: false,
-  //   className: "bg-transparent shadow-none m-2",
   // });
 };

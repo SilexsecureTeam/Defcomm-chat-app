@@ -1,11 +1,14 @@
 # Defcomm Desktop Chat App
 
-Defcomm is a secure desktop chat application built to deliver fast, reliable, and real-time communication across platforms. This repository contains the official desktop releases for macOS and Windows.
+Defcomm is a secure desktop chat application built to deliver fast, reliable, and real-time communication across platforms. This repository contains the official desktop releases for macOS, Windows, and Linux.
 
 ## 🚀 Latest Release
 
-**Version:** 0.1.1  
-**Release Date:** January 5, 2026
+**Version:** 0.1.2  
+**Release Date:** January 7, 2026
+
+**Release Notes:**  
+For best experience, ensure you update to the latest version. Offline cached messages will now appear immediately upon app launch, even without an internet connection.
 
 ## 💻 Supported Platforms
 
@@ -16,25 +19,37 @@ Defcomm is a secure desktop chat application built to deliver fast, reliable, an
 
 ### Windows
 
-- Windows 10 / 11 (64-bit
+- Windows 10 / 11 (64-bit)
+
+### Linux
+
+- Linux x86_64 (Debian / Ubuntu `.deb`)
+- Linux x86_64 (RedHat / Fedora `.rpm`)
 
 ## 📦 Download Options
 
 ### macOS Bundles
 
 - **Intel (x64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.1/Defcomm_x64.app.tar.gz>
-
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_x64.app.tar.gz>
 - **Apple Silicon (ARM64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.1/Defcomm_aarch64.app.tar.gz>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_aarch64.app.tar.gz>
 
 ### Windows Bundles
 
-- **Recommended (Installer):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.1/Defcomm_0.1.1_x64-setup.exe>
+- **Installer (Recommended):**  
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_x64-setup.exe>
+- **MSI Package (Enterprise/Admin Install):**  
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_x64_en-US.msi>
 
-- **MSI Package (Enterprise / Admin Install):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.1/Defcomm_0.1.1_x64_en-US.ms>
+### Linux Bundles
+
+- **Debian / Ubuntu (.deb):**  
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_amd64.deb>
+- **RedHat / Fedora (.rpm):**  
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm-0.1.1-1.x86_64.rpm>
+
+---
 
 ## 🛠 Installation
 
@@ -51,33 +66,13 @@ Defcomm is a secure desktop chat application built to deliver fast, reliable, an
 
 1. Download the installer (`.exe` or `.msi`)
 2. Run the installer and follow the setup wizard
-3. Launch Defcomm from the Start Men
+3. Launch Defcomm from the Start Menu
 
-## 🔄 Auto Updates
+### Linux Setup
 
-Defcomm supports secure automatic updates powered by Tauri.  
-When a new version is released, the app will notify users and update automatically
+**Debian / Ubuntu:**
 
-## 🔐 Security & Integrity
-
-- All releases are cryptographically signed
-- Downloads are hosted on GitHub Releases
-- Do not install builds from unofficial sources
-
-## 🐞 Bug Reports & Feedback
-
-If you encounter any issues or have suggestions:
-
-- Open an issue:  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/issues/new>
-
-## 📄 License
-
-This project is proprietary software.  
-All rights reserved © SilexSecure Team.
-
-## 👥 Maintained By
-
-**SilexSecure Team**  
-Official Repository: <https://github.com/SilexsecureTeam>
-_Thank you for using Defcomm Desktop._
+```bash
+sudo dpkg -i Defcomm_0.1.1_amd64.deb
+sudo apt-get install -f  # install dependencies if needed
+```
