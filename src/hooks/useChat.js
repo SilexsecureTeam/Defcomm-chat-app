@@ -25,6 +25,8 @@ const useChat = () => {
       },
       enabled: !!authDetails,
       staleTime: 0,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Fetch Contacts Manually
@@ -41,6 +43,8 @@ const useChat = () => {
         return data?.data || [];
       },
       enabled: !!authDetails, // Fetch only when authenticated
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Fetch Group Members Manually
@@ -152,6 +156,8 @@ const useChat = () => {
       },
       enabled: !!authDetails,
       staleTime: 0,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   const updateCallLog = useMutation({

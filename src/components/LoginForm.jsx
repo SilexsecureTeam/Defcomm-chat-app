@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import PhoneInput from "react-phone-input-2";
 import "react-phone-input-2/lib/style.css";
 import { isValidPhoneNumber } from "libphonenumber-js";
@@ -19,13 +19,18 @@ const LoginForm = ({ version }) => {
     : location.state?.from?.pathname || "/dashboard/home";
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors },
     setValue,
     watch,
     trigger,
-  } = useForm({ mode: "onChange" });
+  } = useForm({
+    mode: "onChange",
+    defaultValues: {
+      phone: "",
+    },
+  });
 
   const { requestOtp, verifyOtp, isLoading } = useAuth();
   const [otpRequested, setOtpRequested] = useState(false);
@@ -33,8 +38,6 @@ const LoginForm = ({ version }) => {
   const [userData, setUserData] = useState(null);
   const [timer, setTimer] = useState(60);
   const [selectedCountry, setSelectedCountry] = useState("ng");
-
-  const phone = watch("phone");
 
   useEffect(() => {
     let interval;
@@ -69,7 +72,7 @@ const LoginForm = ({ version }) => {
   };
 
   return (
-    <div className="w-full max-w-[780px] flex justify-center lg:justify-end items-center pt-44">
+    <div className="w-full max-w-[780px] flex justify-center lg:justify-end items-center pt-80">
       {useScanMode ? (
         <ScanLogin onToggle={() => setUseScanMode(false)} />
       ) : (
@@ -83,34 +86,32 @@ const LoginForm = ({ version }) => {
                 Sign in With Defcomm account
               </h2>
 
-              <PhoneInput
-                country={selectedCountry}
-                value={phone}
-                onChange={(phone, countryData) => {
-                  setValue("phone", phone, { shouldValidate: true });
-                  setSelectedCountry(countryData?.countryCode || "ng");
-                  trigger("phone");
+              <Controller
+                name="phone"
+                control={control}
+                rules={{
+                  required: "Phone number is required",
+                  validate: (value) =>
+                    isValidPhoneNumber("+" + value) ||
+                    "Invalid phone number for selected country",
                 }}
-                inputProps={{ name: "phone", required: true }}
-                inputStyle={{ width: "100%", height: "40px" }}
-                containerStyle={{ marginBottom: "10px", height: "40px" }}
+                render={({ field }) => (
+                  <PhoneInput
+                    country={selectedCountry}
+                    value={field.value}
+                    onChange={(value, countryData) => {
+                      field.onChange(value);
+                      setSelectedCountry(countryData?.countryCode || "ng");
+                    }}
+                    inputStyle={{ width: "100%", height: "40px" }}
+                    containerStyle={{ marginBottom: "10px", height: "40px" }}
+                  />
+                )}
               />
+
               {errors.phone && (
                 <p className="text-red-500 text-sm">{errors.phone.message}</p>
               )}
-
-              <input
-                type="hidden"
-                {...register("phone", {
-                  required: "Phone number is required",
-                  validate: (value) => {
-                    if (!value || !isValidPhoneNumber("+" + value)) {
-                      return "Invalid phone number for selected country";
-                    }
-                    return true;
-                  },
-                })}
-              />
 
               <div className="flex justify-between items-center text-sm mt-3">
                 <label className="flex items-center gap-2">

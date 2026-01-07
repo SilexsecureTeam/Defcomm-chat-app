@@ -68,6 +68,8 @@ const usePusherChannel = ({ userId, token }) => {
         ? receiverUserId // I sent it → save under receiver
         : senderUserId; // They sent it → save under sender
 
+      console.log("message log", data);
+
       // Show toast only if not my message
       const shouldToast =
         (data?.state === "text" || data?.state === "call") && !isMyChat;

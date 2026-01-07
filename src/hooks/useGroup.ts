@@ -27,6 +27,9 @@ const useGroups = () => {
       },
       enabled: !!authDetails, // Fetch only when authenticated
       staleTime: 0, // Forces refetching every time you visit the page
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Fetch [pending] groups
@@ -39,6 +42,9 @@ const useGroups = () => {
       },
       enabled: !!authDetails, // Fetch only when authenticated
       staleTime: 0, // Forces refetching every time you visit the page
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Fetch members of a specific group
@@ -52,6 +58,9 @@ const useGroups = () => {
       },
       enabled: !!authDetails && !!groupId, // Fetch only when authenticated and groupId is provided
       staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   const useFetchGroupInfo = (groupId: string | null) =>
@@ -64,6 +73,9 @@ const useGroups = () => {
       },
       enabled: !!authDetails && !!groupId, // Fetch only when authenticated and groupId is provided
       staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Fetch members of a specific group
@@ -76,6 +88,9 @@ const useGroups = () => {
       },
       enabled: !!authDetails, // Fetch only when authenticated and groupId is provided
       staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // Add to contact mutation

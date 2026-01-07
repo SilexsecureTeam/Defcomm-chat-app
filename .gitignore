@@ -11,12 +11,13 @@ node_modules
 dist
 dist-ssr
 *.local
+.env
 
 # Tauri build/config directory
-.tauri
-
+.tauri/
 # Editor and OS backup files
-/~
+*~
+*.base64
 
 # Editor directories and files
 .vscode/*

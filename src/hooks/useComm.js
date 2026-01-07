@@ -24,8 +24,9 @@ const useComm = () => {
       },
       enabled: !!authDetails?.user_enid,
       staleTime: 0,
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   const getInvitedChannelList = () =>
@@ -39,8 +40,9 @@ const useComm = () => {
       },
       enabled: !!authDetails?.user_enid,
       staleTime: 0,
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   const getInvitedChannelPending = () =>
@@ -54,8 +56,9 @@ const useComm = () => {
       },
       enabled: !!authDetails?.user_enid,
       staleTime: 0,
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
 
   // ➕ Create New Comm Channel
@@ -163,12 +166,6 @@ const useComm = () => {
   const subscriberLeave = useMutation({
     mutationFn: (payload) =>
       client.post("/walkietalkie/subscriberLeave", payload),
-    // onSuccess: () => {
-    //   onSuccess({
-    //     message: "Disconnected from the channel",
-    //     success: "Disconnected",
-    //   });
-    // },
     onError: (err) => {
       onFailure({
         message: "Unable to disconnect from the channel",

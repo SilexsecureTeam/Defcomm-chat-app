@@ -29,7 +29,7 @@ function withSubscription(WrappedComponent, featureKey) {
     // 2. No active plan
     if (!plan || plan?.status !== "active") {
       return (
-        <div className="min-h-[50vh] flex items-center justify-center bg-gray-900 text-center">
+        <div className="h-full flex items-center justify-center bg-gray-900 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -67,7 +67,7 @@ function withSubscription(WrappedComponent, featureKey) {
 
     // 4. Plan exists but feature not included
     return (
-      <div className="min-h-[50vh] flex items-center justify-center bg-gray-900 text-center">
+      <div className="h-full flex items-center justify-center bg-gray-900 text-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}

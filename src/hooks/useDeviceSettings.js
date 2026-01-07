@@ -19,7 +19,9 @@ const useDeviceSettings = () => {
       return data?.data || [];
     },
     enabled: !!authDetails,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: "offlineFirst",
     staleTime: 0,
   });
 
@@ -31,7 +33,9 @@ const useDeviceSettings = () => {
       return data?.data || [];
     },
     enabled: !!authDetails,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: "offlineFirst",
     staleTime: 0,
   });
 
@@ -44,7 +48,9 @@ const useDeviceSettings = () => {
         return data?.data || [];
       },
       enabled: !!authDetails && !!type,
-      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
       staleTime: 0,
     });
 
@@ -98,7 +104,9 @@ const useDeviceSettings = () => {
       return data?.data || [];
     },
     enabled: !!authDetails,
-    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: "offlineFirst",
     staleTime: 0,
   });
 

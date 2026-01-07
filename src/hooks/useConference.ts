@@ -21,6 +21,9 @@ const useConference = () => {
     },
     enabled: !!authDetails?.user_enid,
     staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: "offlineFirst",
   });
 
   const getMyMeetingsQuery = useQuery({
@@ -31,6 +34,9 @@ const useConference = () => {
     },
     enabled: !!authDetails,
     staleTime: 0,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: true,
+    networkMode: "offlineFirst",
   });
   const getMeetingByIdQuery = (id) => {
     return useQuery({
@@ -41,8 +47,9 @@ const useConference = () => {
       },
       enabled: !!id && !!authDetails, // only fetch if ID and auth exist
       staleTime: 0,
-      refetchOnMount: true,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      networkMode: "offlineFirst",
     });
   };
 
