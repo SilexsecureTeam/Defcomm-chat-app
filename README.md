@@ -4,7 +4,7 @@ Defcomm is a secure desktop chat application built to deliver fast, reliable, an
 
 ## 🚀 Latest Release
 
-**Version:** 0.1.2  
+**Version:** 0.1.3  
 **Release Date:** January 7, 2026
 
 **Release Notes:**  
@@ -31,23 +31,23 @@ For best experience, ensure you update to the latest version. Offline cached mes
 ### macOS Bundles
 
 - **Intel (x64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_x64.app.tar.gz>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_x64.app.tar.gz>
 - **Apple Silicon (ARM64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_aarch64.app.tar.gz>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_aarch64.app.tar.gz>
 
 ### Windows Bundles
 
 - **Installer (Recommended):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_x64-setup.exe>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_x64-setup.exe>
 - **MSI Package (Enterprise/Admin Install):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_x64_en-US.msi>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_x64_en-US.msi>
 
 ### Linux Bundles
 
 - **Debian / Ubuntu (.deb):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm_0.1.1_amd64.deb>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_amd64.deb>
 - **RedHat / Fedora (.rpm):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.2/Defcomm-0.1.1-1.x86_64.rpm>
+  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm-0.1.1-1.x86_64.rpm>
 
 ---
 
@@ -65,8 +65,8 @@ For best experience, ensure you update to the latest version. Offline cached mes
 ### Windows Setup
 
 1. Download the installer (`.exe` or `.msi`)
-2. Run the installer and follow the setup wizard
-3. Launch Defcomm from the Start Menu
+2. Run the installer and follow the setup wizard.
+3. Launch Defcomm from the Start Menu.
 
 ### Linux Setup
 
@@ -75,4 +75,3 @@ For best experience, ensure you update to the latest version. Offline cached mes
 ```bash
 sudo dpkg -i Defcomm_0.1.1_amd64.deb
 sudo apt-get install -f  # install dependencies if needed
-```
