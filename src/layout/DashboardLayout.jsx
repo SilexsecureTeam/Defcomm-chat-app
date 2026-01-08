@@ -6,6 +6,7 @@ import ChatList from "../components/Chat/desktop/ChatList";
 import RightPanel from "../components/Chat/desktop/RightPanel";
 import { toast } from "react-toastify";
 import { useAppStore } from "../context/StoreContext"; // ✅ use the shared store
+import { MdClose } from "react-icons/md";
 
 export default function DashboardLayout() {
   const location = useLocation();
@@ -84,13 +85,13 @@ export default function DashboardLayout() {
             transition={{ type: "spring", stiffness: 200, damping: 25 }}
             className="fixed inset-y-0 left-0 bg-oliveDark/95 z-50 p-4 md:hidden h-full flex flex-col shadow-lg shadow-black/40"
           >
-            <div className="flex justify-between items-center mt-8 mb-2">
+            <div className="flex justify-between items-center mt-8">
               <h2 className="text-lg font-semibold"></h2>
               <button
                 onClick={() => setShowChatList(false)}
                 className="text-gray-300 hover:text-white text-sm"
               >
-                Close
+                <MdClose size={24} />
               </button>
             </div>
             <div className="flex-1 h-full overflow-y-auto">
@@ -128,7 +129,7 @@ export default function DashboardLayout() {
                 onClick={() => setShowRightPanel(false)}
                 className="text-gray-300 hover:text-white text-sm"
               >
-                Close
+                <MdClose size={24} />
               </button>
             </div>
             <RightPanel />

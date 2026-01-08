@@ -45,14 +45,13 @@ export default function ChatHeader() {
           </div>
         </div>
       ) : (
-        <p className="font-bold text-lg">Chat</p>
+        <p className="font-bold text-lg"> </p>
       )}
 
-      {/* ===== TOGGLE RIGHT PANEL ICON ===== */}
       <motion.button
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.95 }}
-        onClick={() => setShowRightPanel(true)} // ✅ Works directly now
+        onClick={() => setShowRightPanel(true)} // Works directly now
         className="p-2 rounded-full hover:bg-oliveGreen/80 transition lg:hidden"
         title="View details"
       >

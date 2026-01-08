@@ -28,8 +28,6 @@ const DefcommLogin = () => {
   const rotateScroll = useTransform(scrollYProgress, [0, 1], [0, 360]); // Rotates scroll image
 
   useEffect(() => {
-    console.log(authDetails);
-
     if (authDetails?.user) {
       navigate("/dashboard", { replace: true });
     }

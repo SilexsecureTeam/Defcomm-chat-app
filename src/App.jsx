@@ -19,8 +19,8 @@ import { GroupProvider } from "./context/GroupContext";
 import { CommProvider } from "./context/CommContext";
 import { MeetingProvider } from "./context/MeetingContext";
 import { DashboardContextProvider } from "./context/DashboardContext";
-import NetworkStatusBanner from "./components/NetworkStatusBanner";
 
+import NetworkStatusBanner from "./components/NetworkStatusBanner";
 import TitleBar from "./layout/TitleBar";
 import RootRedirect from "./routes/RootRedirect";
 import ForcedUpdateModal from "./utils/ForcedUpdateModal";
@@ -30,31 +30,34 @@ import { isTauri } from "@tauri-apps/api/core";
 import { useIsRestoring } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 
-// Lazy load components
+// Lazy-loaded routes
 const DefcommLogin = lazy(() => import("./pages/DefcommLogin"));
 const SecureRoute = lazy(() => import("./routes/SecureRoute"));
 const Dashboard = lazy(() => import("./routes/DashboardRoute"));
 
-/**
- * Inner App that is wrapped by StoreProvider
- * Ensures useAppStore() is called after provider is available
- */
 const AppInner = () => {
   const { get } = useAppStore();
-  const [userId, setUserId] = useState(null);
+
+  const [userId, setUserId] = useState(undefined); // undefined = loading
   const [forcedUpdate, setForcedUpdate] = useState(null);
   const [bypassed, setBypassed] = useState(false);
+  const [appReady, setAppReady] = useState(false);
 
-  // Fetch saved user from Store
+  /* ---- Load stored auth user ---- */
   useEffect(() => {
     const fetchUser = async () => {
-      const savedUser = await get("authUser");
-      setUserId(savedUser?.user?.id || null);
+      try {
+        const savedUser = await get("authUser");
+        setUserId(savedUser?.user?.id || null);
+      } catch (err) {
+        console.error("Failed to load auth user:", err);
+        setUserId(null);
+      }
     };
     fetchUser();
   }, [get]);
 
-  // Tauri updater check
+  /* ---- Tauri updater ---- */
   useEffect(() => {
     const checkUpdate = async () => {
       if (!(await isTauri())) return;
@@ -62,15 +65,15 @@ const AppInner = () => {
       try {
         const { check } = await import("@tauri-apps/plugin-updater");
         const update = await check();
+
         if (update?.available) {
           const releaseDate = new Date(update.date).getTime();
-          const graceDays = import.meta.env.VITE_UPDATE_GRACE_DAYS || 3; // fallback 3 days
-          const deadline = releaseDate + graceDays * 24 * 60 * 60 * 1000;
+          const graceDays = Number(import.meta.env.VITE_UPDATE_GRACE_DAYS) || 3;
 
           setForcedUpdate({
             version: update.version,
             notes: update.body || update.rawJson?.notes,
-            deadline,
+            deadline: releaseDate + graceDays * 24 * 60 * 60 * 1000,
           });
         }
       } catch (err) {
@@ -81,76 +84,31 @@ const AppInner = () => {
     checkUpdate();
   }, []);
 
+  useEffect(() => {
+    setAppReady(true);
+  }, []);
+
   const isExpired = forcedUpdate && Date.now() >= forcedUpdate.deadline;
+
+  /* ---- HARD GUARD: wait for userId ---- */
+  if (userId === undefined) {
+    return <FallBack />;
+  }
 
   const persister = createTauriPersister({ userId });
 
   return (
     <PersistQueryClientProvider
       client={queryClient}
-      persistOptions={{ persister, maxAge: 1000 * 60 * 60 * 24 }}
+      persistOptions={{
+        persister,
+        maxAge: 1000 * 60 * 60 * 24, // 24h
+      }}
     >
-      {/* Wait for query cache to restore */}
-      <PersistedApp
-        forcedUpdate={forcedUpdate}
-        isExpired={isExpired}
-        setBypassed={setBypassed}
-        bypassed={bypassed}
-      />
-    </PersistQueryClientProvider>
-  );
-};
+      <PersistedApp />
 
-/**
- * Component that renders the main UI after React Query cache is restored
- */
-const PersistedApp = ({ forcedUpdate, isExpired, setBypassed, bypassed }) => {
-  const isRestoring = useIsRestoring();
-
-  if (isRestoring) return <div>Loading cached data...</div>;
-
-  return (
-    <>
-      <AuthProvider>
-        <NotificationProvider>
-          <ChatProvider>
-            <GroupProvider>
-              <CommProvider>
-                <MeetingProvider>
-                  <DashboardContextProvider>
-                    <TitleBar />
-                    <Suspense fallback={<FallBack />}>
-                      <Router>
-                        <Routes>
-                          <Route path="/" element={<RootRedirect />} />
-                          <Route path="/login" element={<DefcommLogin />} />
-                          <Route path="/dashboard/*" element={<SecureRoute />}>
-                            <Route path="*" element={<Dashboard />} />
-                          </Route>
-                          <Route
-                            path="*"
-                            element={<Navigate to="/" replace />}
-                          />
-                        </Routes>
-                      </Router>
-                    </Suspense>
-                    <ToastContainer
-                      position="top-right"
-                      newestOnTop
-                      theme="colored"
-                      className="z-[10000] mt-10"
-                    />
-                    <NetworkStatusBanner />
-                  </DashboardContextProvider>
-                </MeetingProvider>
-              </CommProvider>
-            </GroupProvider>
-          </ChatProvider>
-        </NotificationProvider>
-      </AuthProvider>
-
-      {/* Overlay AFTER app renders */}
-      {forcedUpdate && (!bypassed || isExpired) && (
+      {/* Forced update overlay (AFTER app is ready) */}
+      {appReady && forcedUpdate && (!bypassed || isExpired) && (
         <ForcedUpdateModal
           version={forcedUpdate.version}
           notes={forcedUpdate.notes}
@@ -159,14 +117,58 @@ const PersistedApp = ({ forcedUpdate, isExpired, setBypassed, bypassed }) => {
           onBypass={() => setBypassed(true)}
         />
       )}
-    </>
+    </PersistQueryClientProvider>
   );
 };
 
-/**
- * Root App
- * Provides StoreProvider first
- */
+const PersistedApp = () => {
+  const isRestoring = useIsRestoring();
+
+  if (isRestoring) {
+    return <FallBack />;
+  }
+
+  return (
+    <AuthProvider>
+      <NotificationProvider>
+        <ChatProvider>
+          <GroupProvider>
+            <CommProvider>
+              <MeetingProvider>
+                <DashboardContextProvider>
+                  <TitleBar />
+
+                  <Suspense fallback={<FallBack />}>
+                    <Router>
+                      <Routes>
+                        <Route path="/" element={<RootRedirect />} />
+                        <Route path="/login" element={<DefcommLogin />} />
+                        <Route path="/dashboard/*" element={<SecureRoute />}>
+                          <Route path="*" element={<Dashboard />} />
+                        </Route>
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                      </Routes>
+                    </Router>
+                  </Suspense>
+
+                  <ToastContainer
+                    position="top-right"
+                    newestOnTop
+                    theme="colored"
+                    className="z-[10000] mt-10"
+                  />
+
+                  <NetworkStatusBanner />
+                </DashboardContextProvider>
+              </MeetingProvider>
+            </CommProvider>
+          </GroupProvider>
+        </ChatProvider>
+      </NotificationProvider>
+    </AuthProvider>
+  );
+};
+
 const App = () => (
   <StoreProvider>
     <AppInner />
