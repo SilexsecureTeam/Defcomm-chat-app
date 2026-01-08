@@ -73,15 +73,18 @@ jobs:
         with:
           workspaces: "./src-tauri -> target"
 
-      # 🔑 Set version from tag (CRITICAL)
+      # 🔑 Set version from tag (CRITICAL FIX)
       - name: Sync version with Git tag
         shell: bash
         run: |
           TAG_VERSION=${GITHUB_REF_NAME#v}
-          echo "Setting app version to $TAG_VERSION"
+          echo "Setting version to $TAG_VERSION"
 
+          # update Node package version
           jq ".version = \"$TAG_VERSION\"" package.json > package.tmp.json && mv package.tmp.json package.json
-          jq ".package.version = \"$TAG_VERSION\"" src-tauri/tauri.conf.json > src-tauri/tauri.tmp.json && mv src-tauri/tauri.tmp.json src-tauri/tauri.conf.json
+
+          # update Tauri config top-level version only (DO NOT use .package)
+          jq ".version = \"$TAG_VERSION\"" src-tauri/tauri.conf.json > src-tauri/tauri.tmp.json && mv src-tauri/tauri.tmp.json src-tauri/tauri.conf.json
 
       # 🔐 Decode signing key
       - name: Decode Tauri signing key
@@ -100,7 +103,7 @@ jobs:
           echo "TAURI_SIGNING_PRIVATE_KEY=$TMP_KEY" >> $GITHUB_ENV
           echo "TAURI_SIGNING_PRIVATE_KEY_PASSWORD=${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}" >> $GITHUB_ENV
 
-      # 🚀 Build + Publish (THIS IS THE ONLY RELEASE CREATION)
+      # 🚀 Build + Publish
       - name: Build and publish Tauri app
         uses: tauri-apps/tauri-action@v0
         with:
