@@ -61,7 +61,10 @@ jobs:
             libgdk-pixbuf2.0-dev \
             libpango1.0-dev \
             libcairo2-dev \
-            pkg-config
+            pkg-config \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf
 
       - name: Install Rust stable
         uses: dtolnay/rust-toolchain@stable
