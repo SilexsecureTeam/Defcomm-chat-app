@@ -65,7 +65,7 @@ const AppInner = () => {
       try {
         const { check } = await import("@tauri-apps/plugin-updater");
         const update = await check();
-
+        console.log("Tauri update check result:", update);
         if (update?.available) {
           const releaseDate = new Date(update.date).getTime();
           const graceDays = Number(import.meta.env.VITE_UPDATE_GRACE_DAYS) || 3;
