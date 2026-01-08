@@ -25,7 +25,7 @@ const useDeviceSettings = () => {
     staleTime: 0,
   });
 
-  // ✅ Fetch device login logs
+  // Fetch device login logs
   const getDeviceLogsQuery = useQuery({
     queryKey: ["deviceLogs"],
     queryFn: async () => {
@@ -39,7 +39,7 @@ const useDeviceSettings = () => {
     staleTime: 0,
   });
 
-  // ✅ Fetch active devices
+  // Fetch active devices
   const getDevicesQuery = (type) =>
     useQuery({
       queryKey: [`${type}Devices`],
@@ -54,7 +54,7 @@ const useDeviceSettings = () => {
       staleTime: 0,
     });
 
-  // ✅ Mutation to update device status
+  // Mutation to update device status
   const updateDeviceStatusMutation = useMutation({
     mutationFn: async ({ id, status }) => {
       const { data } = await client.get(
@@ -82,7 +82,7 @@ const useDeviceSettings = () => {
       return data;
     },
     onSuccess: () => {
-      // ✅ Refetch the latest settings
+      // Refetch the latest settings
       queryClient.invalidateQueries(["userSettings"]);
       onSuccess({
         title: "Setting Updated",

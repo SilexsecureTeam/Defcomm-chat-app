@@ -50,7 +50,7 @@ const DefcommLogin = () => {
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8 }}
-          className="w-full sticky top-0 z-50 flex justify-between items-center mb-auto bg-transparent backdrop-blur-lg px-4 py-2"
+          className="w-full fixed top-8 z-50 flex justify-between items-center mb-auto bg-transparent backdrop-blur-lg px-4 py-2"
         >
           <img src={logoIcon} alt="Defcomm Icon" className="w-20" />
           {/* <div className="flex gap-2">
