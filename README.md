@@ -4,11 +4,11 @@ Defcomm is a secure desktop chat application built to deliver fast, reliable, an
 
 ## 🚀 Latest Release
 
-**Version:** 0.1.3  
-**Release Date:** January 7, 2026
+**Version:** 0.1.6
+**Release Date:** January 8, 2026
 
-**Release Notes:**  
-For best experience, ensure you update to the latest version. Offline cached messages will now appear immediately upon app launch, even without an internet connection.
+**Release Notes:**
+For the best experience, ensure you update to the latest version. Offline cached messages now appear immediately upon app launch, even without an internet connection. This release also includes performance improvements, stability fixes, and internal optimizations across all platforms.
 
 ## 💻 Supported Platforms
 
@@ -30,41 +30,51 @@ For best experience, ensure you update to the latest version. Offline cached mes
 
 ### macOS Bundles
 
-- **Intel (x64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_x64.app.tar.gz>
-- **Apple Silicon (ARM64):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_aarch64.app.tar.gz>
+- **Intel (x64):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_x64.app.tar.gz](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_x64.app.tar.gz)
+- **Apple Silicon (ARM64):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_aarch64.app.tar.gz](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_aarch64.app.tar.gz)
 
 ### Windows Bundles
 
-- **Installer (Recommended):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_x64-setup.exe>
-- **MSI Package (Enterprise/Admin Install):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_x64_en-US.msi>
+- **Installer (Recommended):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_x64-setup.exe](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_x64-setup.exe)
+- **MSI Package (Enterprise/Admin Install):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_x64_en-US.msi](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_x64_en-US.msi)
 
 ### Linux Bundles
 
-- **Debian / Ubuntu (.deb):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm_0.1.1_amd64.deb>
-- **RedHat / Fedora (.rpm):**  
-  <https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.3/Defcomm-0.1.1-1.x86_64.rpm>
+- **Debian / Ubuntu (.deb):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_amd64.deb](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm_0.1.6_amd64.deb)
+- **RedHat / Fedora (.rpm):**
+  [https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm-0.1.6-1.x86_64.rpm](https://github.com/SilexsecureTeam/Defcomm-chat-app/releases/download/v0.1.6/Defcomm-0.1.6-1.x86_64.rpm)
 
 ---
+
+You are invited to join a DefComm meeting.
+
+Subject: SilexSecure x OTC: Exploring IoT Collaboration
+Date & Time: Tue, 6 January 2026 at 13:00
+Meeting ID: 10mt-t95p-vjiq
+
+Join Meeting:
+https://meet.defcomm.ng?meetingId=10mt-t95p-vjiq
 
 ## 🛠 Installation
 
 ### macOS Setup
 
 1. Download the correct build for your Mac.
-2. Extract the `.app` file.
+2. Extract the `.app.tar.gz` file.
 3. Move **Defcomm.app** to the **Applications** folder.
 4. On first launch, if blocked:
+
    - Go to **System Settings → Privacy & Security**
    - Click **Open Anyway**
 
 ### Windows Setup
 
-1. Download the installer (`.exe` or `.msi`)
+1. Download the installer (`.exe` or `.msi`).
 2. Run the installer and follow the setup wizard.
 3. Launch Defcomm from the Start Menu.
 
@@ -73,5 +83,12 @@ For best experience, ensure you update to the latest version. Offline cached mes
 **Debian / Ubuntu:**
 
 ```bash
-sudo dpkg -i Defcomm_0.1.1_amd64.deb
+sudo dpkg -i Defcomm_0.1.6_amd64.deb
 sudo apt-get install -f  # install dependencies if needed
+```
+
+**RedHat / Fedora:**
+
+```bash
+sudo rpm -i Defcomm-0.1.6-1.x86_64.rpm
+```
