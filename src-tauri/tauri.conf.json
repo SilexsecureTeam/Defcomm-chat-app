@@ -18,7 +18,6 @@
         "width": 400,
         "height": 300,
         "decorations": false,
-        "alwaysOnTop": true,
         "resizable": false,
         "center": true,
         "transparent": true,
@@ -34,7 +33,9 @@
         "minHeight": 400,
         "decorations": false,
         "visible": false,
-        "backgroundColor": "#000000"
+        "backgroundColor": "#000000",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true
       }
     ],
     "security": {

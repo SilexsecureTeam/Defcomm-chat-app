@@ -1,42 +1,125 @@
 import { useEffect, useState } from "react";
-import { FiX, FiMinus, FiSquare, FiCopy } from "react-icons/fi"; // Added FiCopy for restore icon
+import { FiX, FiMinus, FiSquare, FiCopy, FiDownload } from "react-icons/fi";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import mainLogo from "../assets/logo-icon.png";
+import { invoke, isTauri } from "@tauri-apps/api/core";
+import {
+  writeFile,
+  readFile as readBinaryFile,
+  BaseDirectory,
+} from "@tauri-apps/plugin-fs";
+import { onSuccess } from "../utils/notifications/OnSuccess";
+import { onFailure } from "../utils/notifications/OnFailure";
 
 export default function TitleBar() {
   const appWindow = getCurrentWindow();
   const [isMaximized, setIsMaximized] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportStatus, setExportStatus] = useState(null);
 
   useEffect(() => {
     async function init() {
-      const maximized = await appWindow.isMaximized();
-      setIsMaximized(maximized);
+      try {
+        setIsMaximized(await appWindow.isMaximized());
+      } catch {}
     }
     init();
 
     const unlisten = appWindow.onResized(async () => {
-      setIsMaximized(await appWindow.isMaximized());
+      try {
+        setIsMaximized(await appWindow.isMaximized());
+      } catch {}
     });
 
     return () => {
-      unlisten.then((f) => f());
+      unlisten.then((f) => f()).catch(() => {});
     };
   }, [appWindow]);
 
-  const minimize = () => appWindow.minimize();
-  const toggleMaximize = async () => {
-    const max = await appWindow.isMaximized();
-    max ? appWindow.unmaximize() : appWindow.maximize();
-    setIsMaximized(!max);
+  const minimize = async () => {
+    try {
+      await appWindow.minimize();
+    } catch {}
   };
-  const close = () => appWindow.close();
+
+  const toggleMaximize = async () => {
+    try {
+      const max = await appWindow.isMaximized();
+      max ? await appWindow.unmaximize() : await appWindow.maximize();
+      setIsMaximized(!max);
+    } catch {}
+  };
+
+  const close = async () => {
+    try {
+      await appWindow.close();
+    } catch {}
+  };
+
+  async function saveLog() {
+    try {
+      // 1. Get the full log path from Rust
+      const logPath = await invoke("get_log_path");
+      console.log("Log path:", logPath);
+
+      // 2. Read the log as bytes
+      const logBytes = await readBinaryFile(logPath);
+
+      // 3. Decode bytes to UTF-8 string
+      const decoder = new TextDecoder("utf-8");
+      const logString = decoder.decode(logBytes);
+      console.log("Current log content (UTF-8):\n", logString);
+
+      // 4. Write to Downloads folder
+      await writeFile(
+        { path: "defcomm/defcomm.log", contents: logBytes },
+        { dir: BaseDirectory.Download, recursive: true }
+      );
+
+      alert("Log successfully exported to Downloads/defcomm/defcomm.log");
+    } catch (err) {
+      console.error("Failed to save log:", err);
+      alert("Failed to save log. Check console for details.");
+    }
+  }
+
+  async function exportLog() {
+    try {
+      // 1. Get log bytes from Rust (as number[])
+      const logArray = await invoke("download_log");
+
+      // 2. Convert number[] to Uint8Array
+      const logBytes = new Uint8Array(logArray);
+
+      // 3. Decode to UTF-8 for console logging
+      const logString = new TextDecoder("utf-8").decode(logBytes);
+
+      // 4. Write to Downloads folder (recursive)
+      await writeFile(
+        "defcomm.log", // path relative to BaseDirectory.Download
+        logBytes, // contents
+        { baseDir: BaseDirectory.Download, recursive: true } // options
+      );
+
+      onSuccess({
+        message: "Log Exported",
+        success: "The log has been saved to your Downloads folder.",
+      });
+    } catch (err) {
+      console.error("Failed to export log:", err);
+      onFailure({
+        message: "Export Failed",
+        error: "An error occurred while exporting the log. Please try again.",
+      });
+    }
+  }
 
   return (
     <div
       className="fixed top-0 left-0 right-0 z-[100000000] flex items-center justify-between h-10 bg-oliveDark text-white px-4 select-none"
       data-tauri-drag-region
     >
-      {/* Left: App icon and title */}
+      {/* Left */}
       <div
         className="flex items-center gap-2"
         style={{ WebkitAppRegion: "drag" }}
@@ -45,8 +128,26 @@ export default function TitleBar() {
         <span className="font-medium text-sm">Defcomm Chat</span>
       </div>
 
-      {/* Right: Window controls */}
+      {/* Right */}
       <div className="flex items-center gap-1">
+        {/* Export Log */}
+        <button
+          onClick={exportLog}
+          disabled={exporting}
+          title="Export logs"
+          className="p-2 hover:bg-gray-700 rounded disabled:opacity-50 flex items-center gap-1"
+          style={{ WebkitAppRegion: "no-drag" }}
+        >
+          <FiDownload size={14} />
+          {exporting && <span className="text-xs">Saving…</span>}
+          {exportStatus === "ok" && (
+            <span className="text-green-400 text-xs">✓</span>
+          )}
+          {exportStatus === "error" && (
+            <span className="text-red-400 text-xs">!</span>
+          )}
+        </button>
+
         <button
           onClick={minimize}
           className="p-2 hover:bg-gray-700 rounded"
@@ -60,7 +161,6 @@ export default function TitleBar() {
           className="p-2 hover:bg-gray-700 rounded"
           style={{ WebkitAppRegion: "no-drag" }}
         >
-          {/* Change icon depending on window state */}
           {isMaximized ? <FiCopy size={14} /> : <FiSquare size={14} />}
         </button>
 

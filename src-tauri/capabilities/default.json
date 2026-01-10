@@ -14,6 +14,37 @@
     "opener:default",
     "notification:default",
     "store:default",
-    "updater:default"
-  ]
+    "updater:default",
+    "log:default",
+    "log:allow-log",
+    "fs:allow-download-write",
+    "fs:allow-read",
+    "fs:allow-read-file",
+
+    "fs:allow-write",
+    "fs:allow-app-write",
+    "fs:allow-appcache-write",
+    "fs:allow-desktop-write",
+    "fs:allow-download-write-recursive",
+    "fs:allow-applocaldata-write",
+    "fs:allow-log-write",
+    "fs:allow-write-file",
+    "fs:allow-applog-read",
+    "fs:allow-applog-write",
+    "fs:allow-applog-write-recursive",
+    "fs:allow-applog-read-recursive"
+  ],
+  "fs": {
+    "allow-read": { "scope": ["all"] },
+    "allow-write-file": { "scope": ["all"] },
+    "allow-read-file": { "scope": ["all"] },
+    "allow-write": { "scope": ["all"] },
+    "allow-app-write": { "scope": ["all"] },
+    "allow-appcache-write": { "scope": ["all"] },
+    "allow-desktop-write": { "scope": ["all"] },
+    "allow-download-write": { "scope": ["all"] },
+    "allow-download-write-recursive": { "scope": ["all"] },
+    "allow-applocaldata-write": { "scope": ["all"] },
+    "allow-log-write": { "scope": ["all"] }
+  }
 }
