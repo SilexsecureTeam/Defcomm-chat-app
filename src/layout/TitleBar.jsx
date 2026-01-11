@@ -28,7 +28,9 @@ export default function TitleBar() {
     const unlisten = appWindow.onResized(async () => {
       try {
         setIsMaximized(await appWindow.isMaximized());
-      } catch {}
+      } catch (err) {
+        console.log("onResize Error", err);
+      }
     });
 
     return () => {
@@ -39,7 +41,9 @@ export default function TitleBar() {
   const minimize = async () => {
     try {
       await appWindow.minimize();
-    } catch {}
+    } catch (err) {
+      console.error("Minimize failed:", err);
+    }
   };
 
   const toggleMaximize = async () => {
@@ -47,41 +51,18 @@ export default function TitleBar() {
       const max = await appWindow.isMaximized();
       max ? await appWindow.unmaximize() : await appWindow.maximize();
       setIsMaximized(!max);
-    } catch {}
+    } catch (err) {
+      console.error("Toggle maximize failed:", err);
+    }
   };
 
   const close = async () => {
     try {
       await appWindow.close();
-    } catch {}
-  };
-
-  async function saveLog() {
-    try {
-      // 1. Get the full log path from Rust
-      const logPath = await invoke("get_log_path");
-      console.log("Log path:", logPath);
-
-      // 2. Read the log as bytes
-      const logBytes = await readBinaryFile(logPath);
-
-      // 3. Decode bytes to UTF-8 string
-      const decoder = new TextDecoder("utf-8");
-      const logString = decoder.decode(logBytes);
-      console.log("Current log content (UTF-8):\n", logString);
-
-      // 4. Write to Downloads folder
-      await writeFile(
-        { path: "defcomm/defcomm.log", contents: logBytes },
-        { dir: BaseDirectory.Download, recursive: true }
-      );
-
-      alert("Log successfully exported to Downloads/defcomm/defcomm.log");
     } catch (err) {
-      console.error("Failed to save log:", err);
-      alert("Failed to save log. Check console for details.");
+      console.error("Close failed:", err);
     }
-  }
+  };
 
   async function exportLog() {
     try {

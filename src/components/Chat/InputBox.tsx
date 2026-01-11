@@ -202,6 +202,7 @@ const InputBox = ({
           document.execCommand("insertText", false, text);
         }}
         tabIndex={0}
+        onClick={() => editorRef.current?.focus()}
         onFocus={onFocus}
         onBlur={onBlur}
         className="flex-1 p-2 bg-transparent border-none outline-none leading-snug min-h-[24px] max-h-40 overflow-auto"
